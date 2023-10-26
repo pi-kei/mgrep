@@ -2,7 +2,7 @@
 
 Find in files CLI tool writen in Go
 
-Usage:
+## Usage
 
 ```
 mgrep [OPTIONS] SEARCH [PATH]
@@ -32,3 +32,10 @@ OPTIONS:
   -no-subdirs
         Do not scan subdirectories. Same as max-depth=0
 ```
+## Build
+
+Install go on your system. Run in command line from project root:
+
+`go mod tidy`
+
+`go build -v .`
