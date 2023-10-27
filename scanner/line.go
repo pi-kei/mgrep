@@ -28,7 +28,7 @@ func (l *Line) ScanFile(fileEntry base.DirEntry, searchRegexp *regexp.Regexp, ca
 		if slice := searchRegexp.FindStringIndex(line); slice != nil {
 			result := base.SearchResult{Path: fileEntry.Path, LineNumber: lineNumber, StartIndex: slice[0], EndIndex: slice[1], Line: line}
 			if l.filter.SkipSearchResult(result) {
-				continue;
+				continue
 			}
 			err := callback(result)
 			if err != nil {
@@ -40,42 +40,43 @@ func (l *Line) ScanFile(fileEntry base.DirEntry, searchRegexp *regexp.Regexp, ca
 }
 
 func (l *Line) ScanDirs(rootPath string, callback func(base.DirEntry) error) error {
-	rootDirEntry, err := l.reader.ReadRootEntry(rootPath)
-	if err != nil {
-		return err
+	rootDirEntry, rootErr := l.reader.ReadRootEntry(rootPath)
+	if rootErr != nil {
+		return rootErr
 	}
-	if rootDirEntry.IsDir {
-		var scanDir func(base.DirEntry, func(base.DirEntry) error) error
-		scanDir = func(dirEntry base.DirEntry, callback func(base.DirEntry) error) error {
-			if l.filter.SkipDirEntry(dirEntry) {
-				return nil
-			}
-			entries, err := l.reader.ReadDir(dirEntry)
-			for _, entry := range entries {
-				if entry.IsDir {
-					err := scanDir(entry, callback)
-					if err != nil {
-						return err
-					}
-				} else {
-					if l.filter.SkipFileEntry(entry) {
-						continue
-					}
-					err = callback(entry)
-					if err != nil {
-						return err
-					}
-				}
-			}
-			if err != nil {
-				return err
-			}
+	
+	if !rootDirEntry.IsDir {
+		if l.filter.SkipFileEntry(rootDirEntry) {
 			return nil
 		}
-		return scanDir(rootDirEntry, callback)
+		return callback(rootDirEntry)
 	}
-	if l.filter.SkipFileEntry(rootDirEntry) {
+	
+	var scanDir func(base.DirEntry, func(base.DirEntry) error) error
+	scanDir = func(dirEntry base.DirEntry, callback func(base.DirEntry) error) error {
+		entries, err := l.reader.ReadDir(dirEntry)
+		for _, entry := range entries {
+			var loopErr error
+			if entry.IsDir {
+				if l.filter.SkipDirEntry(entry) {
+					continue
+				}
+				loopErr = scanDir(entry, callback)
+			} else {
+				if l.filter.SkipFileEntry(entry) {
+					continue
+				}
+				loopErr = callback(entry)
+			}
+			if loopErr != nil {
+				return loopErr
+			}
+		}
+		return err
+	}
+	
+	if l.filter.SkipDirEntry(rootDirEntry) {
 		return nil
 	}
-	return callback(rootDirEntry);
+	return scanDir(rootDirEntry, callback)
 }
