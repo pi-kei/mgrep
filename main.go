@@ -9,9 +9,15 @@ import (
 	"regexp"
 	"runtime"
 	"syscall"
+
+	"github.com/pi-kei/mgrep/base"
+	"github.com/pi-kei/mgrep/reader"
+	"github.com/pi-kei/mgrep/scanner"
+	"github.com/pi-kei/mgrep/searcher"
+	"github.com/pi-kei/mgrep/sink"
 )
 
-func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options SearchOptions) {
+func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options base.SearchOptions) {
 	maxSizeFlag := flag.Int64("max-size", 1024 * 1024, "Max file size in bytes")
 	maxLengthFlag := flag.Int("max-length", 1024, "Max line length")
 	includeFlag := flag.String("include", "", "Regexp of paths to include")
@@ -34,15 +40,15 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options Se
 		searchDir = flag.Arg(1)
 	}
 
-	options = SearchOptions{
-		maxSize: *maxSizeFlag,
-		maxLength: *maxLengthFlag,
-		include: nil,
-		exclude: nil,
-		matchCase: *matchCaseFlag,
-		concurrency: *concurrFlag,
-		bufferSize: *bufferSizeFlag,
-		maxDepth: *maxDepthFlag,
+	options = base.SearchOptions{
+		MaxSize: *maxSizeFlag,
+		MaxLength: *maxLengthFlag,
+		Include: nil,
+		Exclude: nil,
+		MatchCase: *matchCaseFlag,
+		Concurrency: *concurrFlag,
+		BufferSize: *bufferSizeFlag,
+		MaxDepth: *maxDepthFlag,
 	}
 
 	if len(*includeFlag) > 0 {
@@ -51,7 +57,7 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options Se
 			fmt.Println("Invalid include", err)
 			os.Exit(1)
 		}
-		options.include = include
+		options.Include = include
 	}
 
 	if len(*excludeFlag) > 0 {
@@ -60,11 +66,11 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options Se
 			fmt.Println("Invalid exclude", err)
 			os.Exit(1)
 		}
-		options.exclude = exclude
+		options.Exclude = exclude
 	}
 
 	searchPattern := flag.Arg(0)
-	if !options.matchCase {
+	if !options.MatchCase {
 		searchPattern = "(?i)" + searchPattern
 	}
 	
@@ -74,24 +80,24 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options Se
 		os.Exit(1)
 	}
 
-	if options.maxSize < 1 {
-		options.maxSize = 1
+	if options.MaxSize < 1 {
+		options.MaxSize = 1
 	}
 
-	if options.maxLength < 1 {
-		options.maxLength = 1
+	if options.MaxLength < 1 {
+		options.MaxLength = 1
 	}
 
-	if options.concurrency < 1 {
-		options.concurrency = 1
+	if options.Concurrency < 1 {
+		options.Concurrency = 1
 	}
 
-	if options.bufferSize < 0 {
-		options.bufferSize = 0
+	if options.BufferSize < 0 {
+		options.BufferSize = 0
 	}
 
-	if options.maxDepth < 0 || *noSubdirsFlag {
-		options.maxDepth = 0
+	if options.MaxDepth < 0 || *noSubdirsFlag {
+		options.MaxDepth = 0
 	}
 
 	return searchDir, searchRegexp, options
@@ -102,5 +108,9 @@ func main() {
 	defer stop()
 
 	searchDir, searchRegexp, options := parseArguments()
-	search(searchDir, searchRegexp, options, ctx)
+	reader := reader.NewFileSystemReader()
+	scanner := scanner.NewLineScanner(reader)
+	sink := sink.NewStdoutSink()
+	searcher := searcher.NewConcurrentSearcher(scanner, sink, ctx)
+	searcher.Search(searchDir, searchRegexp, options)
 }
