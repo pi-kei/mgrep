@@ -56,11 +56,8 @@ func (l *Line) ScanDirs(rootPath string, callback func(base.DirEntry) error) err
 	scanDir = func(dirEntry base.DirEntry, callback func(base.DirEntry) error) error {
 		entriesIter, err := l.reader.ReadDir(dirEntry)
 		for entriesIter.Next() {
-			loopErr := entriesIter.Err()
-			if loopErr != nil {
-				return loopErr
-			}
 			entry := entriesIter.Value()
+			var loopErr error
 			if entry.IsDir {
 				if l.filter.SkipDirEntry(entry) {
 					continue
@@ -75,6 +72,9 @@ func (l *Line) ScanDirs(rootPath string, callback func(base.DirEntry) error) err
 			if loopErr != nil {
 				return loopErr
 			}
+		}
+		if entriesIter.Err() != nil {
+			return entriesIter.Err()
 		}
 		return err
 	}
