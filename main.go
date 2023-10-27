@@ -11,11 +11,11 @@ import (
 	"syscall"
 
 	"github.com/pi-kei/mgrep/base"
+	"github.com/pi-kei/mgrep/filter"
 	"github.com/pi-kei/mgrep/reader"
 	"github.com/pi-kei/mgrep/scanner"
 	"github.com/pi-kei/mgrep/searcher"
 	"github.com/pi-kei/mgrep/sink"
-	"github.com/pi-kei/mgrep/skipper"
 )
 
 // Search options
@@ -125,11 +125,11 @@ func main() {
 
 	searchDir, searchRegexp, options := parseArguments()
 	reader := reader.NewFileSystemReader()
-	var skipperIns base.Skipper
+	var filterIns base.Filter
 	if options.noSkip {
-		skipperIns = skipper.NewNoopSkipper()
+		filterIns = filter.NewNoopFilter()
 	} else {
-		skipperIns = skipper.NewConfigurableSkipper(
+		filterIns = filter.NewConfigurableFilter(
 			func(dirEntry base.DirEntry) bool {
 				return dirEntry.Depth > options.maxDepth
 			},
@@ -157,7 +157,7 @@ func main() {
 			},
 		)
 	}
-	scanner := scanner.NewLineScanner(reader, skipperIns)
+	scanner := scanner.NewLineScanner(reader, filterIns)
 	sink := sink.NewWriterSink(os.Stdout)
 	var searcherIns base.Searcher
 	if options.concurrency == 0 {

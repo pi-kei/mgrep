@@ -33,7 +33,8 @@ func (fs *FileSystem) ReadDir(dirEntry base.DirEntry) ([]base.DirEntry, error) {
 			return entries, err
 		}
 		size := info.Size()
-		entries = append(entries, base.DirEntry{Path: path, Depth: depth, IsDir: isDir, Size: size})
+		modTime := info.ModTime()
+		entries = append(entries, base.DirEntry{Path: path, Depth: depth, IsDir: isDir, Size: size, ModTime: modTime})
 	}
 	return entries, err
 }
@@ -43,5 +44,5 @@ func (fs *FileSystem) ReadRootEntry(name string) (base.DirEntry, error) {
 	if err != nil {
 		return base.DirEntry{}, err
 	}
-	return base.DirEntry{Path: name, Depth: 0, IsDir: info.IsDir(), Size: info.Size()}, nil
+	return base.DirEntry{Path: name, Depth: 0, IsDir: info.IsDir(), Size: info.Size(), ModTime: info.ModTime()}, nil
 }

@@ -1,4 +1,4 @@
-package skipper
+package filter
 
 import (
 	"github.com/pi-kei/mgrep/base"
@@ -10,11 +10,11 @@ type Configurable struct{
 	skipSearchResultFn func(searchResult base.SearchResult) bool
 }
 
-func NewConfigurableSkipper(
+func NewConfigurableFilter(
 	skipDirEntryFn func(dirEntry base.DirEntry) bool,
 	skipFileEntryFn func(fileEntry base.DirEntry) bool,
 	skipSearchResultFn func(searchResult base.SearchResult) bool,
-) base.Skipper {
+) base.Filter {
 	return &Configurable{skipDirEntryFn, skipFileEntryFn, skipSearchResultFn}
 }
 

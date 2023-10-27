@@ -9,11 +9,11 @@ import (
 
 type Line struct{
 	reader base.Reader
-	skipper base.Skipper
+	filter base.Filter
 }
 
-func NewLineScanner(reader base.Reader, skipper base.Skipper) base.Scanner {
-	return &Line{reader, skipper}
+func NewLineScanner(reader base.Reader, filter base.Filter) base.Scanner {
+	return &Line{reader, filter}
 }
 
 func (l *Line) ScanFile(fileEntry base.DirEntry, searchRegexp *regexp.Regexp, callback func(base.SearchResult) error) error {
@@ -27,7 +27,7 @@ func (l *Line) ScanFile(fileEntry base.DirEntry, searchRegexp *regexp.Regexp, ca
 		line := scanner.Text()
 		if slice := searchRegexp.FindStringIndex(line); slice != nil {
 			result := base.SearchResult{Path: fileEntry.Path, LineNumber: lineNumber, StartIndex: slice[0], EndIndex: slice[1], Line: line}
-			if l.skipper.SkipSearchResult(result) {
+			if l.filter.SkipSearchResult(result) {
 				continue;
 			}
 			err := callback(result)
@@ -39,7 +39,7 @@ func (l *Line) ScanFile(fileEntry base.DirEntry, searchRegexp *regexp.Regexp, ca
 	return nil
 }
 
-func (l *Line) ScanDir(rootPath string, callback func(base.DirEntry) error) error {
+func (l *Line) ScanDirs(rootPath string, callback func(base.DirEntry) error) error {
 	rootDirEntry, err := l.reader.ReadRootEntry(rootPath)
 	if err != nil {
 		return err
@@ -47,7 +47,7 @@ func (l *Line) ScanDir(rootPath string, callback func(base.DirEntry) error) erro
 	if rootDirEntry.IsDir {
 		var scanDir func(base.DirEntry, func(base.DirEntry) error) error
 		scanDir = func(dirEntry base.DirEntry, callback func(base.DirEntry) error) error {
-			if l.skipper.SkipDirEntry(dirEntry) {
+			if l.filter.SkipDirEntry(dirEntry) {
 				return nil
 			}
 			entries, err := l.reader.ReadDir(dirEntry)
@@ -58,7 +58,7 @@ func (l *Line) ScanDir(rootPath string, callback func(base.DirEntry) error) erro
 						return err
 					}
 				} else {
-					if l.skipper.SkipFileEntry(entry) {
+					if l.filter.SkipFileEntry(entry) {
 						continue
 					}
 					err = callback(entry)
@@ -74,7 +74,7 @@ func (l *Line) ScanDir(rootPath string, callback func(base.DirEntry) error) erro
 		}
 		return scanDir(rootDirEntry, callback)
 	}
-	if l.skipper.SkipFileEntry(rootDirEntry) {
+	if l.filter.SkipFileEntry(rootDirEntry) {
 		return nil
 	}
 	return callback(rootDirEntry);

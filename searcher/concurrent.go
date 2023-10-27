@@ -29,7 +29,7 @@ func (c *Concurrent) Search(rootPath string, searchRegexp *regexp.Regexp, ctx co
 
 	go func() {
 		defer close(filesChannel)
-		err := c.scanner.ScanDir(rootPath, func(fileEntry base.DirEntry) error {
+		err := c.scanner.ScanDirs(rootPath, func(fileEntry base.DirEntry) error {
 			select {
 			case filesChannel <- fileEntry:
 				return nil

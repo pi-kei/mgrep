@@ -18,7 +18,7 @@ func NewLinearSearcher(scanner base.Scanner, sink base.Sink) base.Searcher {
 }
 
 func (l *Linear) Search(rootPath string, searchRegexp *regexp.Regexp, ctx context.Context) {
-	err := l.scanner.ScanDir(rootPath, func(fileEntry base.DirEntry) error {
+	err := l.scanner.ScanDirs(rootPath, func(fileEntry base.DirEntry) error {
 		err := l.scanner.ScanFile(fileEntry, searchRegexp, func(result base.SearchResult) error {
 			l.sink.HandleResult(result)
 			return nil

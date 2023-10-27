@@ -1,4 +1,4 @@
-package skipper
+package filter
 
 import (
 	"github.com/pi-kei/mgrep/base"
@@ -6,7 +6,7 @@ import (
 
 type Noop struct{}
 
-func NewNoopSkipper() base.Skipper {
+func NewNoopFilter() base.Filter {
 	return &Noop{}
 }
 
