@@ -48,13 +48,10 @@ func newIterator(parent base.DirEntry, entries []fs.DirEntry) base.Iterator[base
 }
 
 func (i *iterator) Next() bool {
-	if i.err != nil {
+	if i.err != nil || i.position >= len(i.entries) - 1 {
 		return false
 	}
 	i.position++
-	if i.position >= len(i.entries) {
-		return false
-	}
 	fsDirEntry := i.entries[i.position]
 	path := filepath.Join(i.parent.Path, fsDirEntry.Name())
 	depth := i.parent.Depth + 1
