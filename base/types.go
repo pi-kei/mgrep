@@ -25,14 +25,25 @@ type SearchResult struct {
 	Line       string // full line that has a match
 }
 
+// Generic iterator
+type Iterator[T any] interface {
+	// Indicates if there are no more elements or error occured
+	Next() bool
+	// Current value. Call after Next()
+	Value() T
+	// Last occured error or nil
+	Err() error
+}
+
 // Reads one entry
 type Reader interface {
 	// Opens entry to read its content.
 	// Entry must be a file
 	OpenFile(fileEntry DirEntry) (interface { io.Reader; io.Closer }, error)
 	// Reads child entries from specified entry.
-	// Entry must be a directory
-	ReadDir(dirEntry DirEntry) ([]DirEntry, error)
+	// Entry must be a directory.
+	// Returns iterator and error. Iterator can generate valid entries even if error is not nil
+	ReadDir(dirEntry DirEntry) (Iterator[DirEntry], error)
 	// Reads root entry from specified name.
 	// Entry can be a file or directory
 	ReadRootEntry(name string) (DirEntry, error)
