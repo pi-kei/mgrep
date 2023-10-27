@@ -31,6 +31,8 @@ OPTIONS:
         Max file size in bytes (default 1048576)
   -no-subdirs
         Do not scan subdirectories. Same as max-depth=0
+  -no-skip
+        Do not skip anything
 ```
 ## Build
 
