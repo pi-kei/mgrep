@@ -46,6 +46,12 @@ type Scanner interface {
 	ScanDir(rootPath string, options SearchOptions, callback func(DirEntry) error) error
 }
 
+type Skipper interface {
+	SkipDirEntry(dirEntry DirEntry, options SearchOptions) bool
+	SkipFileEntry(fileEntry DirEntry, options SearchOptions) bool
+	SkipSearchResult(dirEntry SearchResult, options SearchOptions) bool
+}
+
 type Sink interface {
 	HandleResult(result SearchResult)
 }

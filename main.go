@@ -15,6 +15,7 @@ import (
 	"github.com/pi-kei/mgrep/scanner"
 	"github.com/pi-kei/mgrep/searcher"
 	"github.com/pi-kei/mgrep/sink"
+	"github.com/pi-kei/mgrep/skipper"
 )
 
 func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options base.SearchOptions) {
@@ -109,8 +110,9 @@ func main() {
 
 	searchDir, searchRegexp, options := parseArguments()
 	reader := reader.NewFileSystemReader()
-	scanner := scanner.NewLineScanner(reader)
+	skipper := skipper.NewConfigurableSkipper()
+	scanner := scanner.NewLineScanner(reader, skipper)
 	sink := sink.NewStdoutSink()
-	searcher := searcher.NewConcurrentSearcher(scanner, sink, ctx)
-	searcher.Search(searchDir, searchRegexp, options)
+	searcher := searcher.NewConcurrentSearcher(scanner, sink)
+	searcher.Search(searchDir, searchRegexp, options, ctx)
 }
