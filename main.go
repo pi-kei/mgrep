@@ -158,7 +158,7 @@ func main() {
 		)
 	}
 	scanner := scanner.NewLineScanner(reader, skipperIns)
-	sink := sink.NewStdoutSink()
+	sink := sink.NewWriterSink(os.Stdout)
 	var searcherIns base.Searcher
 	if options.concurrency == 0 {
 		searcherIns = searcher.NewLinearSearcher(scanner, sink)
