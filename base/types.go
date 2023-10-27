@@ -23,18 +23,6 @@ type SearchResult struct {
 	Line       string // full line that has a match
 }
 
-// Search options
-type SearchOptions struct {
-	MaxSize       int64          // max size of file to scan in bytes
-	MaxLength     int            // max length of a line to scan
-	Include       *regexp.Regexp // include files that have matching path
-	Exclude       *regexp.Regexp // exclude files that have matching path
-	MatchCase     bool           // case-sensitivity
-	Concurrency   int            // number of goroutines to spawn
-	BufferSize    int            // size of buffers of channels
-	MaxDepth      int            // max recursion depth
-}
-
 type Reader interface {
 	OpenFile(fileEntry DirEntry) (interface { io.Reader; io.Closer }, error)
 	ReadDir(dirEntry DirEntry) ([]DirEntry, error)
@@ -42,14 +30,14 @@ type Reader interface {
 }
 
 type Scanner interface {
-	ScanFile(fileEntry DirEntry, searchRegexp *regexp.Regexp, options SearchOptions, callback func(SearchResult) error) error
-	ScanDir(rootPath string, options SearchOptions, callback func(DirEntry) error) error
+	ScanFile(fileEntry DirEntry, searchRegexp *regexp.Regexp, callback func(SearchResult) error) error
+	ScanDir(rootPath string, callback func(DirEntry) error) error
 }
 
 type Skipper interface {
-	SkipDirEntry(dirEntry DirEntry, options SearchOptions) bool
-	SkipFileEntry(fileEntry DirEntry, options SearchOptions) bool
-	SkipSearchResult(dirEntry SearchResult, options SearchOptions) bool
+	SkipDirEntry(dirEntry DirEntry) bool
+	SkipFileEntry(fileEntry DirEntry) bool
+	SkipSearchResult(dirEntry SearchResult) bool
 }
 
 type Sink interface {
@@ -57,5 +45,5 @@ type Sink interface {
 }
 
 type Searcher interface {
-	Search(rootPath string, searchRegexp *regexp.Regexp, options SearchOptions, ctx context.Context)
+	Search(rootPath string, searchRegexp *regexp.Regexp, ctx context.Context)
 }

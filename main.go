@@ -18,7 +18,19 @@ import (
 	"github.com/pi-kei/mgrep/skipper"
 )
 
-func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options base.SearchOptions) {
+// Search options
+type searchOptions struct {
+	maxSize       int64          // max size of file to scan in bytes
+	maxLength     int            // max length of a line to scan
+	include       *regexp.Regexp // include files that have matching path
+	exclude       *regexp.Regexp // exclude files that have matching path
+	matchCase     bool           // case-sensitivity
+	concurrency   int            // number of goroutines to spawn
+	bufferSize    int            // size of buffers of channels
+	maxDepth      int            // max recursion depth
+}
+
+func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options searchOptions) {
 	maxSizeFlag := flag.Int64("max-size", 1024 * 1024, "Max file size in bytes")
 	maxLengthFlag := flag.Int("max-length", 1024, "Max line length")
 	includeFlag := flag.String("include", "", "Regexp of paths to include")
@@ -41,15 +53,15 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options ba
 		searchDir = flag.Arg(1)
 	}
 
-	options = base.SearchOptions{
-		MaxSize: *maxSizeFlag,
-		MaxLength: *maxLengthFlag,
-		Include: nil,
-		Exclude: nil,
-		MatchCase: *matchCaseFlag,
-		Concurrency: *concurrFlag,
-		BufferSize: *bufferSizeFlag,
-		MaxDepth: *maxDepthFlag,
+	options = searchOptions{
+		maxSize: *maxSizeFlag,
+		maxLength: *maxLengthFlag,
+		include: nil,
+		exclude: nil,
+		matchCase: *matchCaseFlag,
+		concurrency: *concurrFlag,
+		bufferSize: *bufferSizeFlag,
+		maxDepth: *maxDepthFlag,
 	}
 
 	if len(*includeFlag) > 0 {
@@ -58,7 +70,7 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options ba
 			fmt.Println("Invalid include", err)
 			os.Exit(1)
 		}
-		options.Include = include
+		options.include = include
 	}
 
 	if len(*excludeFlag) > 0 {
@@ -67,11 +79,11 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options ba
 			fmt.Println("Invalid exclude", err)
 			os.Exit(1)
 		}
-		options.Exclude = exclude
+		options.exclude = exclude
 	}
 
 	searchPattern := flag.Arg(0)
-	if !options.MatchCase {
+	if !options.matchCase {
 		searchPattern = "(?i)" + searchPattern
 	}
 	
@@ -81,24 +93,24 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options ba
 		os.Exit(1)
 	}
 
-	if options.MaxSize < 1 {
-		options.MaxSize = 1
+	if options.maxSize < 1 {
+		options.maxSize = 1
 	}
 
-	if options.MaxLength < 1 {
-		options.MaxLength = 1
+	if options.maxLength < 1 {
+		options.maxLength = 1
 	}
 
-	if options.Concurrency < 1 {
-		options.Concurrency = 1
+	if options.concurrency < 1 {
+		options.concurrency = 1
 	}
 
-	if options.BufferSize < 0 {
-		options.BufferSize = 0
+	if options.bufferSize < 0 {
+		options.bufferSize = 0
 	}
 
-	if options.MaxDepth < 0 || *noSubdirsFlag {
-		options.MaxDepth = 0
+	if options.maxDepth < 0 || *noSubdirsFlag {
+		options.maxDepth = 0
 	}
 
 	return searchDir, searchRegexp, options
@@ -110,9 +122,35 @@ func main() {
 
 	searchDir, searchRegexp, options := parseArguments()
 	reader := reader.NewFileSystemReader()
-	skipper := skipper.NewConfigurableSkipper()
+	skipper := skipper.NewConfigurableSkipper(
+		func(dirEntry base.DirEntry) bool {
+			return dirEntry.Depth > options.maxDepth
+		},
+		func(fileEntry base.DirEntry) bool {
+			if fileEntry.Size == 0 {
+				// nothing to search
+				return true
+			}
+			if fileEntry.Size > options.maxSize {
+				// skip file because of options
+				return true
+			}
+			if options.include != nil && !options.include.MatchString(fileEntry.Path) {
+				// skip file because of options
+				return true
+			}
+			if options.exclude != nil && options.exclude.MatchString(fileEntry.Path) {
+				// skip file because of options
+				return true
+			}
+			return false
+		},
+		func(searchResult base.SearchResult) bool {
+			return len(searchResult.Line) > options.maxLength
+		},
+	)
 	scanner := scanner.NewLineScanner(reader, skipper)
 	sink := sink.NewStdoutSink()
-	searcher := searcher.NewConcurrentSearcher(scanner, sink)
-	searcher.Search(searchDir, searchRegexp, options, ctx)
+	searcher := searcher.NewConcurrentSearcher(scanner, sink, options.concurrency, options.bufferSize)
+	searcher.Search(searchDir, searchRegexp, ctx)
 }
