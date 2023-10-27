@@ -9,10 +9,11 @@ import (
 
 type Line struct{
 	reader base.Reader
+	skipper base.Skipper
 }
 
-func NewLineScanner(reader base.Reader) base.Scanner {
-	return &Line{reader}
+func NewLineScanner(reader base.Reader, skipper base.Skipper) base.Scanner {
+	return &Line{reader, skipper}
 }
 
 func (l *Line) ScanFile(fileEntry base.DirEntry, searchRegexp *regexp.Regexp, options base.SearchOptions, callback func(base.SearchResult) error) error {
@@ -25,8 +26,12 @@ func (l *Line) ScanFile(fileEntry base.DirEntry, searchRegexp *regexp.Regexp, op
 	for lineNumber := 1; scanner.Scan(); lineNumber++ {
 		line := scanner.Text()
 		if slice := searchRegexp.FindStringIndex(line); slice != nil {
-			err := callback(base.SearchResult{Path: fileEntry.Path, LineNumber: lineNumber, StartIndex: slice[0], EndIndex: slice[1], Line: line})
-			if err != nil && err != base.SkipSearchResult {
+			result := base.SearchResult{Path: fileEntry.Path, LineNumber: lineNumber, StartIndex: slice[0], EndIndex: slice[1], Line: line}
+			if l.skipper.SkipSearchResult(result, options) {
+				continue;
+			}
+			err := callback(result)
+			if err != nil {
 				return err
 			}
 		}
@@ -35,37 +40,31 @@ func (l *Line) ScanFile(fileEntry base.DirEntry, searchRegexp *regexp.Regexp, op
 }
 
 func (l *Line) ScanDir(rootPath string, options base.SearchOptions, callback func(base.DirEntry) error) error {
-	rootDirEntry, rootErr := l.reader.ReadRootEntry(rootPath)
-	if rootErr != nil {
-		return rootErr
-	}
-	rootErr = callback(rootDirEntry)
-	if rootErr != nil {
-		if rootErr == base.SkipDirEntry || rootErr == base.SkipFileEntry {
-			return nil;
-		}
-		return rootErr
+	rootDirEntry, err := l.reader.ReadRootEntry(rootPath)
+	if err != nil {
+		return err
 	}
 	if rootDirEntry.IsDir {
 		var scanDir func(base.DirEntry, base.SearchOptions, func(base.DirEntry) error) error
 		scanDir = func(dirEntry base.DirEntry, options base.SearchOptions, callback func(base.DirEntry) error) error {
+			if l.skipper.SkipDirEntry(dirEntry, options) {
+				return nil
+			}
 			entries, err := l.reader.ReadDir(dirEntry)
 			for _, entry := range entries {
-				var loopErr error
 				if entry.IsDir {
-					loopErr = callback(dirEntry)
-					if loopErr == base.SkipDirEntry {
-						continue
+					err := scanDir(entry, options, callback)
+					if err != nil {
+						return err
 					}
-					loopErr = scanDir(entry, options, callback)
 				} else {
-					loopErr = callback(entry)
-					if loopErr == base.SkipFileEntry {
+					if l.skipper.SkipFileEntry(entry, options) {
 						continue
 					}
-				}
-				if loopErr != nil {
-					return loopErr
+					err = callback(entry)
+					if err != nil {
+						return err
+					}
 				}
 			}
 			if err != nil {
@@ -75,5 +74,8 @@ func (l *Line) ScanDir(rootPath string, options base.SearchOptions, callback fun
 		}
 		return scanDir(rootDirEntry, options, callback)
 	}
-	return nil;
+	if l.skipper.SkipFileEntry(rootDirEntry, options) {
+		return nil
+	}
+	return callback(rootDirEntry);
 }

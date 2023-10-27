@@ -111,8 +111,8 @@ func main() {
 	searchDir, searchRegexp, options := parseArguments()
 	reader := reader.NewFileSystemReader()
 	skipper := skipper.NewConfigurableSkipper()
-	scanner := scanner.NewLineScanner(reader)
+	scanner := scanner.NewLineScanner(reader, skipper)
 	sink := sink.NewStdoutSink()
-	searcher := searcher.NewConcurrentSearcher(scanner, skipper, sink)
+	searcher := searcher.NewConcurrentSearcher(scanner, sink)
 	searcher.Search(searchDir, searchRegexp, options, ctx)
 }
