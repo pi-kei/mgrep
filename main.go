@@ -101,8 +101,8 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options se
 		options.maxLength = 1
 	}
 
-	if options.concurrency < 1 {
-		options.concurrency = 1
+	if options.concurrency < 0 {
+		options.concurrency = 0
 	}
 
 	if options.bufferSize < 0 {
@@ -151,6 +151,11 @@ func main() {
 	)
 	scanner := scanner.NewLineScanner(reader, skipper)
 	sink := sink.NewStdoutSink()
-	searcher := searcher.NewConcurrentSearcher(scanner, sink, options.concurrency, options.bufferSize)
-	searcher.Search(searchDir, searchRegexp, ctx)
+	var searcherIns base.Searcher
+	if options.concurrency == 0 {
+		searcherIns = searcher.NewLinearSearcher(scanner, sink)
+	} else {
+		searcherIns = searcher.NewConcurrentSearcher(scanner, sink, options.concurrency, options.bufferSize)
+	}
+	searcherIns.Search(searchDir, searchRegexp, ctx)
 }
