@@ -28,6 +28,7 @@ type searchOptions struct {
 	concurrency   int            // number of goroutines to spawn
 	bufferSize    int            // size of buffers of channels
 	maxDepth      int            // max recursion depth
+	noSkip        bool           // do not skip anything
 }
 
 func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options searchOptions) {
@@ -40,6 +41,7 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options se
 	concurrFlag := flag.Int("concurr", runtime.NumCPU(), "How many concurrently running scanners to spawn")
 	bufferSizeFlag := flag.Int("buf-size", 1024, "Size of the buffers")
 	maxDepthFlag := flag.Int("max-depth", 100, "Max recursion depth")
+	noSkipFlag := flag.Bool("no-skip", false, "Do not skip anything")
 
 	flag.Parse()
 
@@ -62,6 +64,7 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options se
 		concurrency: *concurrFlag,
 		bufferSize: *bufferSizeFlag,
 		maxDepth: *maxDepthFlag,
+		noSkip: *noSkipFlag,
 	}
 
 	if len(*includeFlag) > 0 {
@@ -122,34 +125,39 @@ func main() {
 
 	searchDir, searchRegexp, options := parseArguments()
 	reader := reader.NewFileSystemReader()
-	skipper := skipper.NewConfigurableSkipper(
-		func(dirEntry base.DirEntry) bool {
-			return dirEntry.Depth > options.maxDepth
-		},
-		func(fileEntry base.DirEntry) bool {
-			if fileEntry.Size == 0 {
-				// nothing to search
-				return true
-			}
-			if fileEntry.Size > options.maxSize {
-				// skip file because of options
-				return true
-			}
-			if options.include != nil && !options.include.MatchString(fileEntry.Path) {
-				// skip file because of options
-				return true
-			}
-			if options.exclude != nil && options.exclude.MatchString(fileEntry.Path) {
-				// skip file because of options
-				return true
-			}
-			return false
-		},
-		func(searchResult base.SearchResult) bool {
-			return len(searchResult.Line) > options.maxLength
-		},
-	)
-	scanner := scanner.NewLineScanner(reader, skipper)
+	var skipperIns base.Skipper
+	if options.noSkip {
+		skipperIns = skipper.NewNoopSkipper()
+	} else {
+		skipperIns = skipper.NewConfigurableSkipper(
+			func(dirEntry base.DirEntry) bool {
+				return dirEntry.Depth > options.maxDepth
+			},
+			func(fileEntry base.DirEntry) bool {
+				if fileEntry.Size == 0 {
+					// nothing to search
+					return true
+				}
+				if fileEntry.Size > options.maxSize {
+					// skip file because of options
+					return true
+				}
+				if options.include != nil && !options.include.MatchString(fileEntry.Path) {
+					// skip file because of options
+					return true
+				}
+				if options.exclude != nil && options.exclude.MatchString(fileEntry.Path) {
+					// skip file because of options
+					return true
+				}
+				return false
+			},
+			func(searchResult base.SearchResult) bool {
+				return len(searchResult.Line) > options.maxLength
+			},
+		)
+	}
+	scanner := scanner.NewLineScanner(reader, skipperIns)
 	sink := sink.NewStdoutSink()
 	var searcherIns base.Searcher
 	if options.concurrency == 0 {
