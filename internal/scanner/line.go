@@ -70,6 +70,10 @@ func (l *Line) ScanDirs(rootPath string, callback func(base.DirEntry) error) err
 				if l.GetFilter().SkipDirEntry(entry) {
 					continue
 				}
+				loopErr = callback(entry)
+				if loopErr != nil {
+					return loopErr
+				}
 				loopErr = scanDir(entry, callback)
 			} else {
 				if l.GetFilter().SkipFileEntry(entry) {
@@ -89,6 +93,10 @@ func (l *Line) ScanDirs(rootPath string, callback func(base.DirEntry) error) err
 	
 	if l.GetFilter().SkipDirEntry(rootDirEntry) {
 		return nil
+	}
+	rootErr = callback(rootDirEntry)
+	if rootErr != nil {
+		return rootErr
 	}
 	return scanDir(rootDirEntry, callback)
 }

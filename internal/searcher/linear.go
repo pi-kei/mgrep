@@ -27,6 +27,9 @@ func (l *Linear) GetSink() base.Sink {
 
 func (l *Linear) Search(rootPath string, searchRegexp *regexp.Regexp, ctx context.Context) {
 	err := l.GetScanner().ScanDirs(rootPath, func(fileEntry base.DirEntry) error {
+		if fileEntry.IsDir {
+			return nil
+		}
 		err := l.GetScanner().ScanFile(fileEntry, searchRegexp, func(result base.SearchResult) error {
 			l.GetSink().HandleResult(result)
 			return nil

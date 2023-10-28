@@ -30,7 +30,12 @@ func (c *Concurrent) GetSink() base.Sink {
 
 func (c *Concurrent) Search(rootPath string, searchRegexp *regexp.Regexp, ctx context.Context) {
 	filesChannel := concurrency.Generator(func(handleDirEntry func(base.DirEntry) error) {
-		err := c.GetScanner().ScanDirs(rootPath, handleDirEntry)
+		err := c.GetScanner().ScanDirs(rootPath, func(entry base.DirEntry) error {
+			if entry.IsDir {
+				return nil
+			}
+			return handleDirEntry(entry)
+		})
 		if err != nil {
 			fmt.Println("Error scanning dir", err)
 		}

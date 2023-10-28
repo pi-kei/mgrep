@@ -75,7 +75,7 @@ type Scanner interface {
 	GetFilter() Filter
 	// Scans a file and calls a callback on each match
 	ScanFile(fileEntry DirEntry, searchRegexp *regexp.Regexp, callback func(SearchResult) error) error
-	// Scans directories starting at the specified root path and calls a callback on each found file
+	// Scans directories starting at the specified root path and calls a callback on each found entry
 	ScanDirs(rootPath string, callback func(DirEntry) error) error
 }
 
