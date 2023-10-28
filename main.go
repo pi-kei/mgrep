@@ -38,7 +38,7 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options se
 	excludeFlag := flag.String("exclude", "", "Regexp of paths to exclude")
 	matchCaseFlag := flag.Bool("match-case", false, "Match case")
 	noSubdirsFlag := flag.Bool("no-subdirs", false, "Do not scan subdirectories. Same as max-depth=0")
-	concurrFlag := flag.Int("concurr", runtime.NumCPU(), "How many concurrently running scanners to spawn")
+	concurrFlag := flag.Int("concurr", runtime.NumCPU(), "How many concurrently running scanners to spawn. Zero means no concurrency mode")
 	bufferSizeFlag := flag.Int("buf-size", 1024, "Size of the buffers")
 	maxDepthFlag := flag.Int("max-depth", 100, "Max recursion depth")
 	noSkipFlag := flag.Bool("no-skip", false, "Do not skip anything")
