@@ -54,14 +54,6 @@ type Reader interface {
 	ReadRootEntry(name string) (DirEntry, error)
 }
 
-// Scans for matches
-type Scanner interface {
-	// Scans a file and calls a callback on each match
-	ScanFile(fileEntry DirEntry, searchRegexp *regexp.Regexp, callback func(SearchResult) error) error
-	// Scans directories starting at the specified root path and calls a callback on each found file
-	ScanDirs(rootPath string, callback func(DirEntry) error) error
-}
-
 // Checks if skip is needed
 type Filter interface {
 	// Checks if skip is needed for directory.
@@ -75,6 +67,18 @@ type Filter interface {
 	SkipSearchResult(dirEntry SearchResult) bool
 }
 
+// Scans for matches
+type Scanner interface {
+	// Returns reader
+	GetReader() Reader
+	// Returns filter
+	GetFilter() Filter
+	// Scans a file and calls a callback on each match
+	ScanFile(fileEntry DirEntry, searchRegexp *regexp.Regexp, callback func(SearchResult) error) error
+	// Scans directories starting at the specified root path and calls a callback on each found file
+	ScanDirs(rootPath string, callback func(DirEntry) error) error
+}
+
 // Handles search results
 type Sink interface {
 	// Handles search result
@@ -83,6 +87,10 @@ type Sink interface {
 
 // Performs search
 type Searcher interface {
+	// Returns scanner
+	GetScanner() Scanner
+	// Returns sink
+	GetSink() Sink
 	// Starts search
 	Search(rootPath string, searchRegexp *regexp.Regexp, ctx context.Context)
 }

@@ -17,10 +17,18 @@ func NewLinearSearcher(scanner base.Scanner, sink base.Sink) base.Searcher {
 	return &Linear{scanner, sink}
 }
 
+func (l *Linear) GetScanner() base.Scanner {
+	return l.scanner
+}
+
+func (l *Linear) GetSink() base.Sink {
+	return l.sink
+}
+
 func (l *Linear) Search(rootPath string, searchRegexp *regexp.Regexp, ctx context.Context) {
-	err := l.scanner.ScanDirs(rootPath, func(fileEntry base.DirEntry) error {
-		err := l.scanner.ScanFile(fileEntry, searchRegexp, func(result base.SearchResult) error {
-			l.sink.HandleResult(result)
+	err := l.GetScanner().ScanDirs(rootPath, func(fileEntry base.DirEntry) error {
+		err := l.GetScanner().ScanFile(fileEntry, searchRegexp, func(result base.SearchResult) error {
+			l.GetSink().HandleResult(result)
 			return nil
 		})
 		if err != nil {
