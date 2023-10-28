@@ -52,18 +52,18 @@ func (i *iterator) Next() bool {
 		return false
 	}
 	i.position++
-	fsDirEntry := i.entries[i.position]
-	path := filepath.Join(i.parent.Path, fsDirEntry.Name())
-	depth := i.parent.Depth + 1
-	isDir := fsDirEntry.IsDir()
-	info, err := fsDirEntry.Info()
+	info, err := i.entries[i.position].Info()
 	if err != nil {
 		i.err = err
 		return false
 	}
-	size := info.Size()
-	modTime := info.ModTime()
-	i.value = base.DirEntry{Path: path, Depth: depth, IsDir: isDir, Size: size, ModTime: modTime}
+	i.value = base.DirEntry{
+		Path: filepath.Join(i.parent.Path, info.Name()),
+		Depth: i.parent.Depth + 1,
+		IsDir: info.IsDir(),
+		Size: info.Size(),
+		ModTime: info.ModTime(),
+	}
 	return true
 }
 
