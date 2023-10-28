@@ -3,11 +3,10 @@ package searcher
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"regexp"
-	"sync"
 
 	"github.com/pi-kei/mgrep/base"
+	"github.com/pi-kei/mgrep/concurrency"
 )
 
 type Concurrent struct {
@@ -22,50 +21,23 @@ func NewConcurrentSearcher(scanner base.Scanner, sink base.Sink, concurrency int
 }
 
 func (c *Concurrent) Search(rootPath string, searchRegexp *regexp.Regexp, ctx context.Context) {
-	filesChannel := make(chan base.DirEntry, c.bufferSize)
-	resultsChannel := make(chan base.SearchResult, c.bufferSize)
-
-	var resultsWG sync.WaitGroup
-
-	go func() {
-		defer close(filesChannel)
-		err := c.scanner.ScanDirs(rootPath, func(fileEntry base.DirEntry) error {
-			select {
-			case filesChannel <- fileEntry:
-				return nil
-			case <-ctx.Done():
-				return filepath.SkipAll
-			}
-		})
+	filesChannel := concurrency.Generator(func(handleDirEntry func(base.DirEntry) error) {
+		err := c.scanner.ScanDirs(rootPath, handleDirEntry)
 		if err != nil {
 			fmt.Println("Error scanning dir", err)
 		}
-	}()
+	}, c.bufferSize, ctx)
 
-	for i := 0; i < c.concurrency; i++ {
-		resultsWG.Add(1)
-		go func() {
-			defer resultsWG.Done()
-			for fileEntry := range filesChannel {
-				err := c.scanner.ScanFile(fileEntry, searchRegexp, func(result base.SearchResult) error {
-					select {
-					case resultsChannel <- result:
-						return nil
-					case <-ctx.Done():
-						return filepath.SkipAll
-					}
-				})
-				if err != nil {
-					fmt.Println("Error scanning file", err)
-				}
-			}
-		}()
-	}
+	filesChannels := concurrency.FanOut(filesChannel, c.concurrency, c.bufferSize, ctx)
 
-	go func() {
-		defer close(resultsChannel)
-		resultsWG.Wait()
-	}()
+	resultsChannels := concurrency.PipelineMulti(filesChannels, func(fileEntry base.DirEntry, handleSearchResult func(base.SearchResult) error) {
+		err := c.scanner.ScanFile(fileEntry, searchRegexp, handleSearchResult)
+		if err != nil {
+			fmt.Println("Error scanning file", err)
+		}
+	}, c.bufferSize, ctx)
+
+	resultsChannel := concurrency.FanIn(resultsChannels, c.bufferSize, ctx)
 
 	for result := range resultsChannel {
 		c.sink.HandleResult(result)
