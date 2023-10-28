@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"regexp"
 
-	"github.com/pi-kei/mgrep/base"
+	"github.com/pi-kei/mgrep/internal/base"
 )
 
 type Line struct{

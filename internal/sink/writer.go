@@ -5,7 +5,7 @@ import (
 	"io"
 
 	"github.com/fatih/color"
-	"github.com/pi-kei/mgrep/base"
+	"github.com/pi-kei/mgrep/internal/base"
 )
 
 type Writer struct {

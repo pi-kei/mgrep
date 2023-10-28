@@ -1,7 +1,7 @@
 package filter
 
 import (
-	"github.com/pi-kei/mgrep/base"
+	"github.com/pi-kei/mgrep/internal/base"
 )
 
 type Configurable struct{

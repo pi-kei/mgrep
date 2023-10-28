@@ -10,12 +10,12 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/pi-kei/mgrep/base"
-	"github.com/pi-kei/mgrep/filter"
-	"github.com/pi-kei/mgrep/reader"
-	"github.com/pi-kei/mgrep/scanner"
-	"github.com/pi-kei/mgrep/searcher"
-	"github.com/pi-kei/mgrep/sink"
+	"github.com/pi-kei/mgrep/internal/base"
+	"github.com/pi-kei/mgrep/internal/filter"
+	"github.com/pi-kei/mgrep/internal/reader"
+	"github.com/pi-kei/mgrep/internal/scanner"
+	"github.com/pi-kei/mgrep/internal/searcher"
+	"github.com/pi-kei/mgrep/internal/sink"
 )
 
 // Search options

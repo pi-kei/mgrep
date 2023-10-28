@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pi-kei/mgrep/base"
+	"github.com/pi-kei/mgrep/internal/base"
 )
 
 func TestFileSystemReader_OpenFile(t *testing.T) {

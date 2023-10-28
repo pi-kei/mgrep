@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/pi-kei/mgrep/base"
-	"github.com/pi-kei/mgrep/concurrency"
+	"github.com/pi-kei/mgrep/internal/base"
+	"github.com/pi-kei/mgrep/pkg/concurrency"
 )
 
 type Concurrent struct {
