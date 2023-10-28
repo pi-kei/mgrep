@@ -27,11 +27,16 @@ type SearchResult struct {
 
 // Generic iterator
 type Iterator[T any] interface {
-	// Indicates if there are no more elements or error occured
+	// Goes to next element.
+	// Returns false when there are no more elements or error occured.
+	// If false is returned then any additional call to Next() would do nothing
 	Next() bool
-	// Current value. Call after Next()
+	// Returns current value.
+	// Call after Next().
+	// If Next() was not called yet then Value() returns default value of T.
+	// If Next() returned false then Value() returns the same value as before 
 	Value() T
-	// Last occured error or nil
+	// Returns last occured error or nil
 	Err() error
 }
 
