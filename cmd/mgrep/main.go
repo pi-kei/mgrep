@@ -157,13 +157,13 @@ func main() {
 			},
 		)
 	}
-	scanner := scanner.NewLineScanner(reader, filterIns)
+	scanner := scanner.NewLineScanner(reader)
 	sink := sink.NewWriterSink(os.Stdout)
 	var searcherIns base.Searcher
 	if options.concurrency == 0 {
-		searcherIns = searcher.NewLinearSearcher(scanner, sink)
+		searcherIns = searcher.NewLinearSearcher(scanner, filterIns, sink)
 	} else {
-		searcherIns = searcher.NewConcurrentSearcher(scanner, sink, options.concurrency, options.bufferSize)
+		searcherIns = searcher.NewConcurrentSearcher(scanner, filterIns, sink, options.concurrency, options.bufferSize)
 	}
 	searcherIns.Search(searchDir, searchRegexp, ctx)
 }

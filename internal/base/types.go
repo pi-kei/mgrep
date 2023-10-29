@@ -71,12 +71,12 @@ type Filter interface {
 type Scanner interface {
 	// Returns reader
 	GetReader() Reader
-	// Returns filter
-	GetFilter() Filter
-	// Scans a file and calls a callback on each match
-	ScanFile(fileEntry DirEntry, searchRegexp *regexp.Regexp, callback func(SearchResult) error) error
-	// Scans directories starting at the specified root path and calls a callback on each found entry
-	ScanDirs(rootPath string, callback func(DirEntry) error) error
+	// Scans a file and calls a callback on each match.
+	// Callback returns if item was skipped and an error if occured
+	ScanFile(fileEntry DirEntry, searchRegexp *regexp.Regexp, callback func(SearchResult) (bool, error)) error
+	// Scans directories starting at the specified root path and calls a callback on each found entry.
+	// Callback returns if item was skipped and an error if occured
+	ScanDirs(rootPath string, callback func(DirEntry) (bool, error)) error
 }
 
 // Handles search results
@@ -89,6 +89,8 @@ type Sink interface {
 type Searcher interface {
 	// Returns scanner
 	GetScanner() Scanner
+	// Returns filter
+	GetFilter() Filter
 	// Returns sink
 	GetSink() Sink
 	// Starts search
