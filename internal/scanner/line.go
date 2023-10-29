@@ -39,9 +39,8 @@ func (l *Line) ScanFile(fileEntry base.DirEntry, searchRegexp *regexp.Regexp, ca
 	scanner := bufio.NewScanner(file)
 	for lineNumber := 1; scanner.Scan(); lineNumber++ {
 		line := scanner.Text()
-		if slice := searchRegexp.FindStringIndex(line); slice != nil {
-			result := base.SearchResult{Path: fileEntry.Path, LineNumber: lineNumber, StartIndex: slice[0], EndIndex: slice[1], Line: line}
-			err := callback(result)
+		if slice := searchRegexp.FindStringIndex(line); slice != nil { 
+			err := callback(base.SearchResult{Path: fileEntry.Path, LineNumber: lineNumber, StartIndex: slice[0], EndIndex: slice[1], Line: line})
 			if err != nil {
 				if errors.Is(err, l.GetSkipItem()) {
 					continue
