@@ -35,7 +35,7 @@ func (c *Concurrent) GetSink() base.Sink {
 }
 
 func (c *Concurrent) Search(rootPath string, searchRegexp *regexp.Regexp, ctx context.Context) {
-	filesChannels := concurrency.ProcRecursively(rootPath, func(newRootPath string, send func(string) (bool, error), handleDirEntry func(base.DirEntry) error) {
+	filesChannels := concurrency.ProcRecursively(rootPath, func(newRootPath string, send func(string) (int, error), handleDirEntry func(base.DirEntry) error) {
 		err := c.GetScanner().ScanDirs(newRootPath, func(entry base.DirEntry) error {
 			if entry.IsDir {
 				if c.GetFilter().SkipDirEntry(entry) {
@@ -44,11 +44,11 @@ func (c *Concurrent) Search(rootPath string, searchRegexp *regexp.Regexp, ctx co
 				if entry.Path == newRootPath {
 					return nil
 				}
-				sent, err := send(entry.Path)
+				chosen, err := send(entry.Path)
 				if err != nil {
 					return c.GetScanner().GetSkipAll()
 				}
-				if sent {
+				if chosen >= 0 {
 					return c.GetScanner().GetSkipItem()
 				}
 				return nil

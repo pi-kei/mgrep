@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-func SendToAny[I any](value I, channels []chan I, ctx context.Context) (bool, error) {
+func SendToAny[I any](value I, channels []chan I, ctx context.Context) (int, error) {
 	length := len(channels)
 	cases := make([]reflect.SelectCase, length + 2)
 	for i, ch := range channels {
@@ -24,10 +24,10 @@ func SendToAny[I any](value I, channels []chan I, ctx context.Context) (bool, er
 	}
 	chosen, _, _ := reflect.Select(cases)
 	if chosen == length {
-		return false, ctx.Err()
+		return -1, ctx.Err()
 	}
 	if chosen == length + 1 {
-		return false, nil
+		return -1, nil
 	}
-	return true, nil
+	return chosen, nil
 }
