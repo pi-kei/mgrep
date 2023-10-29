@@ -15,7 +15,7 @@ type Writer struct {
 }
 
 func NewWriterSink(writer io.Writer) base.Sink {
-	var highlight = color.New(color.Bold, color.FgHiYellow).SprintFunc()
+	highlight := color.New(color.Bold, color.FgHiYellow).SprintFunc()
 	return &Writer{writer, "%s[%v,%v]:%s%s%s\n", func(result base.SearchResult) []any {
 		startPart := result.Line[0:result.StartIndex]
 		resultPart := highlight(result.Line[result.StartIndex:result.EndIndex])
