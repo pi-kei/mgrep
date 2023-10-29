@@ -19,8 +19,10 @@ func ProcRecursively[I any, O any](root I, proc func(I, func(I) (int, error), fu
 		ins[i] = make(chan I, bufferSize)
 	}
 
+	sendToAny := CreateSendToAny(ins, ctx)
+
 	send := func(value I) (int, error) {
-		chosen, err := SendToAny(value, ins, ctx)
+		chosen, err := sendToAny(value)
 		if chosen >= 0 {
 			wg.Add(1)
 		}
