@@ -2,6 +2,7 @@ package searcher
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 
@@ -35,43 +36,50 @@ func (c *Concurrent) GetSink() base.Sink {
 
 func (c *Concurrent) Search(rootPath string, searchRegexp *regexp.Regexp, ctx context.Context) {
 	filesChannels := concurrency.ProcRecursively(rootPath, func(newRootPath string, send func(string) (bool, error), handleDirEntry func(base.DirEntry) error) {
-		err := c.GetScanner().ScanDirs(newRootPath, func(entry base.DirEntry) (bool, error) {
+		err := c.GetScanner().ScanDirs(newRootPath, func(entry base.DirEntry) error {
 			if entry.IsDir {
-				if skipDir := c.GetFilter().SkipDirEntry(entry); skipDir {
-					return true, nil
+				if c.GetFilter().SkipDirEntry(entry) {
+					return c.GetScanner().GetSkipItem()
 				}
 				if entry.Path == newRootPath {
-					return false, nil
+					return nil
 				}
 				sent, err := send(entry.Path)
 				if err != nil {
-					return false, err
+					return c.GetScanner().GetSkipAll()
 				}
 				if sent {
-					return true, nil
+					return c.GetScanner().GetSkipItem()
 				}
-				return false, nil
+				return nil
 			}
-			if skipFile := c.GetFilter().SkipFileEntry(entry); skipFile {
-				return true, nil
+			
+			if c.GetFilter().SkipFileEntry(entry) {
+				return c.GetScanner().GetSkipItem()
 			}
 			err := handleDirEntry(entry)
-			return false, err
+			if ctx.Err() != nil && errors.Is(err, ctx.Err()) {
+				return c.GetScanner().GetSkipAll()
+			}
+			return err
 		})
-		if err != nil && ctx.Err() == nil {
+		if err != nil {
 			fmt.Println("Error scanning dir", err)
 		}
 	}, c.concurrency, c.bufferSize, ctx)
 
 	resultsChannels := concurrency.PipelineMulti(filesChannels, func(fileEntry base.DirEntry, handleSearchResult func(base.SearchResult) error) {
-		err := c.GetScanner().ScanFile(fileEntry, searchRegexp, func(sr base.SearchResult) (bool, error) {
-			if skipResult := c.GetFilter().SkipSearchResult(sr); skipResult {
-				return true, nil
+		err := c.GetScanner().ScanFile(fileEntry, searchRegexp, func(sr base.SearchResult) error {
+			if c.GetFilter().SkipSearchResult(sr) {
+				return c.GetScanner().GetSkipItem()
 			}
 			err := handleSearchResult(sr)
-			return false, err
+			if ctx.Err() != nil && errors.Is(err, ctx.Err()) {
+				return c.GetScanner().GetSkipAll()
+			}
+			return err
 		})
-		if err != nil && ctx.Err() == nil {
+		if err != nil {
 			fmt.Println("Error scanning file", err)
 		}
 	}, c.bufferSize, ctx)

@@ -34,36 +34,42 @@ func (l *Linear) Search(rootPath string, searchRegexp *regexp.Regexp, ctx contex
 	done := make(chan struct{})
 
 	go func() {
-		err := l.GetScanner().ScanDirs(rootPath, func(entry base.DirEntry) (bool, error) {
+		err := l.GetScanner().ScanDirs(rootPath, func(entry base.DirEntry) error {
 			select {
 			case <-ctx.Done():
-				return false, ctx.Err()
+				return l.GetScanner().GetSkipAll()
 			default:
 			}
+			
 			if entry.IsDir {
-				return l.GetFilter().SkipDirEntry(entry), nil
+				if l.GetFilter().SkipDirEntry(entry) {
+					return l.GetScanner().GetSkipItem()
+				}
+				return nil
 			}
-			if skipFile := l.GetFilter().SkipFileEntry(entry); skipFile {
-				return true, nil
+			
+			if l.GetFilter().SkipFileEntry(entry) {
+				return l.GetScanner().GetSkipItem()
 			}
-			err := l.GetScanner().ScanFile(entry, searchRegexp, func(result base.SearchResult) (bool, error) {
+			err := l.GetScanner().ScanFile(entry, searchRegexp, func(result base.SearchResult) error {
 				select {
 				case <-ctx.Done():
-					return false, ctx.Err()
+					return l.GetScanner().GetSkipAll()
 				default:
 				}
-				if skipResult := l.GetFilter().SkipSearchResult(result); skipResult {
-					return true, nil
+				
+				if l.GetFilter().SkipSearchResult(result) {
+					return l.GetScanner().GetSkipItem()
 				}
 				l.GetSink().HandleResult(result)
-				return false, nil
+				return nil
 			})
-			if err != nil && ctx.Err() == nil {
+			if err != nil {
 				fmt.Println("Error scanning file", err)
 			}
-			return false, nil
+			return nil
 		})
-		if err != nil && ctx.Err() == nil {
+		if err != nil {
 			fmt.Println("Error scanning dir", err)
 		}
 		done <- struct{}{}

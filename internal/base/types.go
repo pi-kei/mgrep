@@ -71,12 +71,16 @@ type Filter interface {
 type Scanner interface {
 	// Returns reader
 	GetReader() Reader
+	// Returns error that means skip item
+	GetSkipItem() error
+	// Returns error that means skip all
+	GetSkipAll() error
 	// Scans a file and calls a callback on each match.
-	// Callback returns if item was skipped and an error if occured
-	ScanFile(fileEntry DirEntry, searchRegexp *regexp.Regexp, callback func(SearchResult) (bool, error)) error
+	// Callback returns an error if occured. Error could be either SkipItem, or SkipAll, or any other error
+	ScanFile(fileEntry DirEntry, searchRegexp *regexp.Regexp, callback func(SearchResult) error) error
 	// Scans directories starting at the specified root path and calls a callback on each found entry.
-	// Callback returns if item was skipped and an error if occured
-	ScanDirs(rootPath string, callback func(DirEntry) (bool, error)) error
+	// Callback returns an error if occured. Error could be either SkipItem, or SkipAll, or any other error
+	ScanDirs(rootPath string, callback func(DirEntry) error) error
 }
 
 // Handles search results
