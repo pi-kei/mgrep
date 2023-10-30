@@ -87,9 +87,6 @@ func (l *Line) ScanDirs(rootPath string, callback func(base.DirEntry) error) err
 					if errors.Is(loopErr, l.GetSkipItem()) {
 						continue
 					}
-					if errors.Is(loopErr, l.GetSkipAll()) {
-						return nil
-					}
 					return loopErr
 				}
 				loopErr = scanDir(entry, callback)
@@ -101,9 +98,6 @@ func (l *Line) ScanDirs(rootPath string, callback func(base.DirEntry) error) err
 				if loopErr != nil {
 					if errors.Is(loopErr, l.GetSkipItem()) {
 						continue
-					}
-					if errors.Is(loopErr, l.GetSkipAll()) {
-						return nil
 					}
 					return loopErr
 				}
@@ -125,5 +119,9 @@ func (l *Line) ScanDirs(rootPath string, callback func(base.DirEntry) error) err
 		}
 		return rootErr
 	}
-	return scanDir(rootDirEntry, callback)
+	rootErr = scanDir(rootDirEntry, callback)
+	if errors.Is(rootErr, l.GetSkipAll()) {
+		return nil
+	}
+	return rootErr
 }
