@@ -45,7 +45,7 @@ func newIterator(parent base.DirEntry, entries []fs.DirEntry) base.Iterator[base
 }
 
 func (i *iterator) Next() bool {
-	if i.err != nil || i.position >= len(i.entries) - 1 {
+	if i.err != nil || i.entries == nil || i.position >= len(i.entries) - 1 {
 		return false
 	}
 	i.position++
