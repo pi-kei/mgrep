@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"runtime"
 	"syscall"
+	"unicode/utf8"
 
 	"github.com/pi-kei/mgrep/internal/base"
 	"github.com/pi-kei/mgrep/internal/filter"
@@ -153,7 +154,7 @@ func main() {
 				return false
 			},
 			func(searchResult base.SearchResult) bool {
-				return len(searchResult.Line) > options.maxLength
+				return utf8.RuneCountInString(searchResult.Line) > options.maxLength
 			},
 		)
 	}
