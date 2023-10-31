@@ -3,94 +3,80 @@ package reader
 import (
 	"errors"
 	"io"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/pi-kei/mgrep/internal/base"
 )
 
-type TreeNode struct {
-	Entry base.DirEntry
-	Children []TreeNode
-	Content *string
+// This structure is not preventing you from a file that have children entries.
+// Just keep it in mind and try to avoid it
+type Entries = map[string]struct{
+	ModTime time.Time   // modification time
+	Content *string     // files must have this not equal to nil, dirs must have this equal to nil
 }
 
 type mockReader struct {
-	tree *TreeNode
+	entries Entries
 }
 
-func NewMockReader(tree *TreeNode) base.Reader {
-	return &mockReader{tree}
-}
-
-func (r *mockReader) getNode(path string) *TreeNode {
-	if path == "" {
-		return nil
-	}
-	parts := strings.Split(path, "/")
-	subPath := parts[0]
-	if r.tree.Entry.Path != subPath {
-		return nil
-	}
-	node := r.tree
-	for i := 1; i < len(parts); i++ {
-		if node.Children == nil {
-			return nil
-		}
-		subPath = subPath + "/" + parts[i]
-		found := -1
-		for j := 0; j < len(node.Children); j++ {
-			if subPath == node.Children[j].Entry.Path {
-				found = j
-				break
-			}
-		}
-		if found >= 0 {
-			node = &node.Children[found]
-		} else {
-			return nil
-		}
-	}
-	return node
+func NewMockReader(entries Entries) base.Reader {
+	return &mockReader{entries}
 }
 
 func (r *mockReader) OpenFile(fileEntry base.DirEntry) (io.ReadCloser, error) {
-	node := r.getNode(fileEntry.Path)
-	if node == nil {
+	entry, ok := r.entries[fileEntry.Path]
+	if !ok {
 		return nil, errors.New("path does not exist")
 	}
-	if node.Content == nil || node.Children != nil || node.Entry.IsDir {
+	if entry.Content == nil {
 		return nil, errors.New("path is not a file")
 	}
-	reader := strings.NewReader(*node.Content)
-	return io.NopCloser(reader), nil
+	return io.NopCloser(strings.NewReader(*entry.Content)), nil
 }
 
 func (r *mockReader) ReadDir(dirEntry base.DirEntry) (base.Iterator[base.DirEntry], error) {
-	node := r.getNode(dirEntry.Path)
-	if node == nil {
+	entry, ok := r.entries[dirEntry.Path]
+	if !ok {
 		return nil, errors.New("path does not exist")
 	}
-	if node.Children == nil || node.Content != nil || !node.Entry.IsDir {
+	if entry.Content != nil {
 		return nil, errors.New("path is not a directory")
 	}
-	return newMockIterator(node.Children), nil
+	children := []base.DirEntry{}
+	for path, entry := range r.entries {
+		if len(path) > len(dirEntry.Path) && strings.HasPrefix(path, dirEntry.Path) && strings.LastIndex(path, "/") == len(dirEntry.Path) {
+			var size int64
+			if entry.Content != nil {
+				size = int64(len(*entry.Content))
+			}
+			children = append(children, base.DirEntry{Path: path, Depth: dirEntry.Depth + 1, IsDir: entry.Content == nil, Size: size, ModTime: entry.ModTime})
+		}
+	}
+	sort.Sort(byPath(children))
+	return newMockIterator(children), nil
 }
 
 func (r *mockReader) ReadRootEntry(name string) (base.DirEntry, error) {
-	node := r.getNode(name)
-	if node == nil {
+	entry, ok := r.entries[name]
+	if !ok {
 		return base.DirEntry{}, errors.New("path does not exist")
 	}
-	return node.Entry, nil
+	var size int64
+	if entry.Content != nil {
+		size = int64(len(*entry.Content))
+	}
+	return base.DirEntry{Path: name, Depth: 0, IsDir: entry.Content == nil, Size: size, ModTime: entry.ModTime}, nil
 }
 
 type mockIterator struct {
-	children []TreeNode
+	children []base.DirEntry
 	position int
 	value base.DirEntry
 }
 
-func newMockIterator(children []TreeNode) base.Iterator[base.DirEntry] {
+func newMockIterator(children []base.DirEntry) base.Iterator[base.DirEntry] {
 	return &mockIterator{children, -1, base.DirEntry{}}
 }
 
@@ -99,7 +85,7 @@ func (i *mockIterator) Next() bool {
 		return false
 	}
 	i.position++
-	i.value = i.children[i.position].Entry
+	i.value = i.children[i.position]
 	return true
 }
 
@@ -110,3 +96,8 @@ func (i *mockIterator) Value() base.DirEntry {
 func (i *mockIterator) Err() error {
 	return nil
 }
+
+type byPath []base.DirEntry
+func (e byPath) Len() int { return len(e) }
+func (e byPath) Swap(i, j int) { e[i], e[j] = e[j], e[i] }
+func (e byPath) Less(i, j int) bool { return e[i].Path < e[j].Path }
