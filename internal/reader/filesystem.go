@@ -15,10 +15,7 @@ func NewFileSystemReader() base.Reader {
 	return &FileSystem{}
 }
 
-func (fs *FileSystem) OpenFile(fileEntry base.DirEntry) (interface {
-	io.Reader
-	io.Closer
-}, error) {
+func (fs *FileSystem) OpenFile(fileEntry base.DirEntry) (io.ReadCloser, error) {
 	return os.Open(fileEntry.Path)
 }
 

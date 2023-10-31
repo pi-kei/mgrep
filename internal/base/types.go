@@ -44,7 +44,7 @@ type Iterator[T any] interface {
 type Reader interface {
 	// Opens entry to read its content.
 	// Entry must be a file
-	OpenFile(fileEntry DirEntry) (interface { io.Reader; io.Closer }, error)
+	OpenFile(fileEntry DirEntry) (io.ReadCloser, error)
 	// Reads child entries from specified entry.
 	// Entry must be a directory.
 	// Returns iterator and error. Iterator can generate valid entries even if error is not nil
