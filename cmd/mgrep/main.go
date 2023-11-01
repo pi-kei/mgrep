@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"regexp"
 	"runtime"
+	"runtime/pprof"
 	"syscall"
 	"unicode/utf8"
 
@@ -30,6 +31,7 @@ type searchOptions struct {
 	bufferSize    int            // size of buffers of channels
 	maxDepth      int            // max recursion depth
 	noSkip        bool           // do not skip anything
+	profile       string         // set to cpu, heap or block
 }
 
 func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options searchOptions) {
@@ -43,6 +45,7 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options se
 	bufferSizeFlag := flag.Int("buf-size", 1024, "Size of the buffers")
 	maxDepthFlag := flag.Int("max-depth", 100, "Max recursion depth")
 	noSkipFlag := flag.Bool("no-skip", false, "Do not skip anything")
+	profileFlag := flag.String("prof", "", "Run profiling. Set to cpu, heap or block")
 
 	flag.Parse()
 
@@ -66,6 +69,7 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options se
 		bufferSize: *bufferSizeFlag,
 		maxDepth: *maxDepthFlag,
 		noSkip: *noSkipFlag,
+		profile: *profileFlag,
 	}
 
 	if len(*includeFlag) > 0 {
@@ -121,10 +125,51 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options se
 }
 
 func main() {
+	searchDir, searchRegexp, options := parseArguments()
+
+	if options.profile == "cpu" {
+		cpuProf, err := os.Create("cpu.prof")
+		if err != nil {
+			return
+		}
+		defer cpuProf.Close()
+		err = pprof.StartCPUProfile(cpuProf)
+		if err != nil {
+			return
+		}
+		defer pprof.StopCPUProfile()
+	} else if options.profile == "heap" {
+		defer func() {
+			heapProf, err := os.Create("heap.prof")
+			if err != nil {
+				return
+			}
+			defer heapProf.Close()
+			p := pprof.Lookup("heap")
+			if p == nil {
+				return
+			}
+			p.WriteTo(heapProf, 0)
+		}()
+	} else if options.profile == "block" {
+		runtime.SetBlockProfileRate(1)
+		defer func() {
+			blockProf, err := os.Create("block.prof")
+			if err != nil {
+				return
+			}
+			defer blockProf.Close()
+			p := pprof.Lookup("block")
+			if p == nil {
+				return
+			}
+			p.WriteTo(blockProf, 0)
+		}()
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	searchDir, searchRegexp, options := parseArguments()
 	reader := reader.NewFileSystemReader()
 	var filterIns base.Filter
 	if options.noSkip {
