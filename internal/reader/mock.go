@@ -15,6 +15,7 @@ import (
 type Entries = map[string]struct{
 	ModTime time.Time   // modification time
 	Content *string     // files must have this not equal to nil, dirs must have this equal to nil
+	Err error           // error reading this entry or nil
 }
 
 type mockReader struct {
@@ -30,6 +31,9 @@ func (r *mockReader) OpenFile(fileEntry base.DirEntry) (io.ReadCloser, error) {
 	if !ok {
 		return nil, errors.New("path does not exist")
 	}
+	if entry.Err != nil {
+		return nil, entry.Err
+	}
 	if entry.Content == nil {
 		return nil, errors.New("path is not a file")
 	}
@@ -40,6 +44,9 @@ func (r *mockReader) ReadDir(dirEntry base.DirEntry) (base.Iterator[base.DirEntr
 	entry, ok := r.entries[dirEntry.Path]
 	if !ok {
 		return nil, errors.New("path does not exist")
+	}
+	if entry.Err != nil {
+		return nil, entry.Err
 	}
 	if entry.Content != nil {
 		return nil, errors.New("path is not a directory")
@@ -55,13 +62,16 @@ func (r *mockReader) ReadDir(dirEntry base.DirEntry) (base.Iterator[base.DirEntr
 		}
 	}
 	sort.Sort(byPath(children))
-	return newMockIterator(children), nil
+	return newMockIterator(r.entries, children), nil
 }
 
 func (r *mockReader) ReadRootEntry(name string) (base.DirEntry, error) {
 	entry, ok := r.entries[name]
 	if !ok {
 		return base.DirEntry{}, errors.New("path does not exist")
+	}
+	if entry.Err != nil {
+		return base.DirEntry{}, entry.Err
 	}
 	var size int64
 	if entry.Content != nil {
@@ -71,20 +81,26 @@ func (r *mockReader) ReadRootEntry(name string) (base.DirEntry, error) {
 }
 
 type mockIterator struct {
+	entries Entries
 	children []base.DirEntry
 	position int
 	value base.DirEntry
+	err error
 }
 
-func newMockIterator(children []base.DirEntry) base.Iterator[base.DirEntry] {
-	return &mockIterator{children, -1, base.DirEntry{}}
+func newMockIterator(entries Entries, children []base.DirEntry) base.Iterator[base.DirEntry] {
+	return &mockIterator{entries, children, -1, base.DirEntry{}, nil}
 }
 
 func (i *mockIterator) Next() bool {
-	if i.children ==nil || i.position >= len(i.children) - 1 {
+	if i.err != nil || i.children ==nil || i.position >= len(i.children) - 1 {
 		return false
 	}
 	i.position++
+	i.err = i.entries[i.children[i.position].Path].Err
+	if i.err != nil {
+		return false
+	}
 	i.value = i.children[i.position]
 	return true
 }
