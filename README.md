@@ -40,4 +40,4 @@ Install go on your system. Run in command line from project root:
 
 `go mod tidy`
 
-`go build -v .`
+`go build -v ./cmd/mgrep`
