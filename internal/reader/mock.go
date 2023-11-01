@@ -3,7 +3,7 @@ package reader
 import (
 	"errors"
 	"io"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -51,18 +51,14 @@ func (r *mockReader) ReadDir(dirEntry base.DirEntry) (base.Iterator[base.DirEntr
 	if entry.Content != nil {
 		return nil, errors.New("path is not a directory")
 	}
-	children := []base.DirEntry{}
-	for path, entry := range r.entries {
+	children := []string{}
+	for path := range r.entries {
 		if len(path) > len(dirEntry.Path) && strings.HasPrefix(path, dirEntry.Path) && strings.LastIndex(path, "/") == len(dirEntry.Path) {
-			var size int64
-			if entry.Content != nil {
-				size = int64(len(*entry.Content))
-			}
-			children = append(children, base.DirEntry{Path: path, Depth: dirEntry.Depth + 1, IsDir: entry.Content == nil, Size: size, ModTime: entry.ModTime})
+			children = append(children, path)
 		}
 	}
-	sort.Sort(byPath(children))
-	return newMockIterator(r.entries, children), nil
+	slices.Sort(children)
+	return newMockIterator(r.entries, children, dirEntry.Depth + 1), nil
 }
 
 func (r *mockReader) ReadRootEntry(name string) (base.DirEntry, error) {
@@ -82,26 +78,33 @@ func (r *mockReader) ReadRootEntry(name string) (base.DirEntry, error) {
 
 type mockIterator struct {
 	entries Entries
-	children []base.DirEntry
+	children []string
+	depth int
 	position int
 	value base.DirEntry
 	err error
 }
 
-func newMockIterator(entries Entries, children []base.DirEntry) base.Iterator[base.DirEntry] {
-	return &mockIterator{entries, children, -1, base.DirEntry{}, nil}
+func newMockIterator(entries Entries, children []string, depth int) base.Iterator[base.DirEntry] {
+	return &mockIterator{entries, children, depth, -1, base.DirEntry{}, nil}
 }
 
 func (i *mockIterator) Next() bool {
-	if i.err != nil || i.children ==nil || i.position >= len(i.children) - 1 {
+	if i.err != nil || i.children == nil || i.position >= len(i.children) - 1 {
 		return false
 	}
 	i.position++
-	i.err = i.entries[i.children[i.position].Path].Err
+	path := i.children[i.position]
+	entry := i.entries[path]
+	i.err = entry.Err
 	if i.err != nil {
 		return false
 	}
-	i.value = i.children[i.position]
+	var size int64
+	if entry.Content != nil {
+		size = int64(len(*entry.Content))
+	}
+	i.value = base.DirEntry{Path: path, Depth: i.depth, IsDir: entry.Content == nil, Size: size, ModTime: entry.ModTime}
 	return true
 }
 
@@ -112,8 +115,3 @@ func (i *mockIterator) Value() base.DirEntry {
 func (i *mockIterator) Err() error {
 	return nil
 }
-
-type byPath []base.DirEntry
-func (e byPath) Len() int { return len(e) }
-func (e byPath) Swap(i, j int) { e[i], e[j] = e[j], e[i] }
-func (e byPath) Less(i, j int) bool { return e[i].Path < e[j].Path }
