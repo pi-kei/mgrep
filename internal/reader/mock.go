@@ -11,7 +11,10 @@ import (
 )
 
 // This structure is not preventing you from a file that have children entries.
-// Just keep it in mind and try to avoid it
+// Just keep it in mind and try to avoid it.
+// Key is a single path. Parts of a path separeted by /.
+// Do not put / at the start or end of a path.
+// Do not put multiple / in a row.
 type Entries = map[string]struct{
 	ModTime time.Time   // modification time
 	Content *string     // files must have this not equal to nil, dirs must have this equal to nil
