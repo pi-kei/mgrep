@@ -31,7 +31,7 @@ type searchOptions struct {
 	bufferSize    int            // size of buffers of channels
 	maxDepth      int            // max recursion depth
 	noSkip        bool           // do not skip anything
-	profile       string         // set to cpu, heap or block
+	profile       string         // set to cpu, heap, block or mutex
 }
 
 func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options searchOptions) {
@@ -45,7 +45,7 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options se
 	bufferSizeFlag := flag.Int("buf-size", 1024, "Size of the buffers")
 	maxDepthFlag := flag.Int("max-depth", 100, "Max recursion depth")
 	noSkipFlag := flag.Bool("no-skip", false, "Do not skip anything")
-	profileFlag := flag.String("prof", "", "Run profiling. Set to cpu, heap or block")
+	profileFlag := flag.String("prof", "", "Run profiling. Set to cpu, heap, block or mutex")
 
 	flag.Parse()
 
@@ -164,6 +164,20 @@ func main() {
 				return
 			}
 			p.WriteTo(blockProf, 0)
+		}()
+	} else if options.profile == "mutex" {
+		runtime.SetMutexProfileFraction(1)
+		defer func() {
+			mutexProf, err := os.Create("mutex.prof")
+			if err != nil {
+				return
+			}
+			defer mutexProf.Close()
+			p := pprof.Lookup("mutex")
+			if p == nil {
+				return
+			}
+			p.WriteTo(mutexProf, 0)
 		}()
 	}
 
