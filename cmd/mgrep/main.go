@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"runtime"
 	"runtime/pprof"
+	"runtime/trace"
 	"syscall"
 	"unicode/utf8"
 
@@ -31,7 +32,7 @@ type searchOptions struct {
 	bufferSize    int            // size of buffers of channels
 	maxDepth      int            // max recursion depth
 	noSkip        bool           // do not skip anything
-	profile       string         // set to cpu, heap, block or mutex
+	profile       string         // set to cpu, heap, block, mutex or trace
 }
 
 func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options searchOptions) {
@@ -45,7 +46,7 @@ func parseArguments() (searchDir string, searchRegexp *regexp.Regexp, options se
 	bufferSizeFlag := flag.Int("buf-size", 1024, "Size of the buffers")
 	maxDepthFlag := flag.Int("max-depth", 100, "Max recursion depth")
 	noSkipFlag := flag.Bool("no-skip", false, "Do not skip anything")
-	profileFlag := flag.String("prof", "", "Run profiling. Set to cpu, heap, block or mutex")
+	profileFlag := flag.String("prof", "", "Run profiling. Set to cpu, heap, block, mutex or trace")
 
 	flag.Parse()
 
@@ -179,6 +180,17 @@ func main() {
 			}
 			p.WriteTo(mutexProf, 0)
 		}()
+	} else if options.profile == "trace" {
+		traceProf, err := os.Create("trace.prof")
+		if err != nil {
+			return
+		}
+		defer traceProf.Close()
+		err = trace.Start(traceProf)
+		if err != nil {
+			return
+		}
+		defer trace.Stop()
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
