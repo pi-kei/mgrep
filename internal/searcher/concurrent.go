@@ -35,7 +35,7 @@ func (c *Concurrent) GetSink() base.Sink {
 }
 
 func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *regexp.Regexp) {
-	filesChannels := concurrency.ProcRecursively(rootPath, func(newRootPath string, send func(string) (int, error), handleDirEntry func(base.DirEntry) error) {
+	filesChannels := concurrency.ProcRecursively(ctx, rootPath, func(newRootPath string, send func(string) (int, error), handleDirEntry func(base.DirEntry) error) {
 		err := c.GetScanner().ScanDirs(newRootPath, func(entry base.DirEntry) error {
 			if entry.IsDir {
 				if c.GetFilter().SkipDirEntry(entry) {
@@ -66,9 +66,9 @@ func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *
 		if err != nil {
 			fmt.Println("Error scanning dir", err)
 		}
-	}, c.concurrency, c.bufferSize, ctx)
+	}, c.concurrency, c.bufferSize)
 
-	resultsChannels := concurrency.PipelineMulti(filesChannels, func(fileEntry base.DirEntry, handleSearchResult func(base.SearchResult) error) {
+	resultsChannels := concurrency.PipelineMulti(ctx, filesChannels, func(fileEntry base.DirEntry, handleSearchResult func(base.SearchResult) error) {
 		err := c.GetScanner().ScanFile(fileEntry, searchRegexp, func(sr base.SearchResult) error {
 			if c.GetFilter().SkipSearchResult(sr) {
 				return c.GetScanner().GetSkipItem()
@@ -82,9 +82,9 @@ func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *
 		if err != nil {
 			fmt.Println("Error scanning file", err)
 		}
-	}, c.bufferSize, ctx)
+	}, c.bufferSize)
 
-	resultsChannel := concurrency.FanIn(resultsChannels, c.bufferSize, ctx)
+	resultsChannel := concurrency.FanIn(ctx, resultsChannels, c.bufferSize)
 
 	for result := range resultsChannel {
 		c.GetSink().HandleResult(result)

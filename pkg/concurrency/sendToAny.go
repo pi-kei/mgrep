@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-func SendToAny[I any](value I, channels []chan I, ctx context.Context) (int, error) {
+func SendToAny[I any](ctx context.Context, value I, channels []chan I) (int, error) {
 	length := len(channels)
 	cases := make([]reflect.SelectCase, length + 2)
 	for i, ch := range channels {

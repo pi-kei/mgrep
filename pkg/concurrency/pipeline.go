@@ -9,7 +9,7 @@ import (
 // When specified context is done it stops listening for input values and closes output channel, or it returns context's error to proc function.
 // When proc function is done it stops listening for input values and closes output channel.
 // Returns an output channel.
-func Pipeline[I any, O any](in chan I, proc func(I, func(O) error), bufferSize int, ctx context.Context) chan O {
+func Pipeline[I any, O any](ctx context.Context, in chan I, proc func(I, func(O) error), bufferSize int) chan O {
 	out := make(chan O, bufferSize)
 
 	go func() {
@@ -39,11 +39,11 @@ func Pipeline[I any, O any](in chan I, proc func(I, func(O) error), bufferSize i
 }
 
 // Calls Pipeline function on all specified input channels and returns all output channels.
-func PipelineMulti[I any, O any](ins []chan I, proc func(I, func(O) error), bufferSize int, ctx context.Context) []chan O {
+func PipelineMulti[I any, O any](ctx context.Context, ins []chan I, proc func(I, func(O) error), bufferSize int) []chan O {
 	outs := make([]chan O, len(ins))
 	
 	for i := 0; i < len(ins); i++ {
-		outs[i] = Pipeline(ins[i], proc, bufferSize, ctx)
+		outs[i] = Pipeline(ctx, ins[i], proc, bufferSize)
 	}
 
 	return outs

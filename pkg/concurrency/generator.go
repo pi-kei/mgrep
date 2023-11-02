@@ -7,7 +7,7 @@ import "context"
 // When specified context is done it returns context's error to gen function.
 // When gen function is done it closes output channel.
 // Returns output channel.
-func Generator[O any](gen func(func(O) error), bufferSize int, ctx context.Context) chan O {
+func Generator[O any](ctx context.Context, gen func(func(O) error), bufferSize int) chan O {
 	out := make(chan O, bufferSize)
 
 	go func() {

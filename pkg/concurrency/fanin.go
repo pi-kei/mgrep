@@ -9,7 +9,7 @@ import (
 // Sets buffer size of an output channel to a specified value.
 // When specified context is done it stops listening for input values and closes output channel.
 // Returns an output channel.
-func FanIn[I any](ins []chan I, bufferSize int, ctx context.Context) chan I {
+func FanIn[I any](ctx context.Context, ins []chan I, bufferSize int) chan I {
 	out := make(chan I, bufferSize)
 
 	var wg sync.WaitGroup
