@@ -237,5 +237,5 @@ func main() {
 	} else {
 		searcherIns = searcher.NewConcurrentSearcher(scanner, filterIns, sink, options.concurrency, options.bufferSize)
 	}
-	searcherIns.Search(searchDir, searchRegexp, ctx)
+	searcherIns.Search(ctx, searchDir, searchRegexp)
 }

@@ -98,5 +98,5 @@ type Searcher interface {
 	// Returns sink
 	GetSink() Sink
 	// Starts search
-	Search(rootPath string, searchRegexp *regexp.Regexp, ctx context.Context)
+	Search(ctx context.Context, rootPath string, searchRegexp *regexp.Regexp)
 }

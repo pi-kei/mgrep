@@ -30,7 +30,7 @@ func (l *Linear) GetSink() base.Sink {
 	return l.sink
 }
 
-func (l *Linear) Search(rootPath string, searchRegexp *regexp.Regexp, ctx context.Context) {
+func (l *Linear) Search(ctx context.Context, rootPath string, searchRegexp *regexp.Regexp) {
 	done := make(chan struct{})
 
 	go func() {
