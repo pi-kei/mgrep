@@ -64,7 +64,7 @@ type Filter interface {
 	SkipFileEntry(fileEntry DirEntry) bool
 	// Checks if skip is needed for search result.
 	// It means that result must be ignored
-	SkipSearchResult(dirEntry SearchResult) bool
+	SkipSearchResult(searchResult SearchResult) bool
 }
 
 // Scans for matches
