@@ -15,17 +15,19 @@ import (
 // Key is a single path. Parts of a path separeted by /.
 // Do not put / at the start or end of a path.
 // Do not put multiple / in a row.
-type Entries = map[string]struct{
+type MockEntries = map[string]MockEntry
+
+type MockEntry struct{
 	ModTime time.Time   // modification time
 	Content *string     // files must have this not equal to nil, dirs must have this equal to nil
 	Err error           // error reading this entry or nil
 }
 
 type mockReader struct {
-	entries Entries
+	entries MockEntries
 }
 
-func NewMockReader(entries Entries) base.Reader {
+func NewMockReader(entries MockEntries) base.Reader {
 	return &mockReader{entries}
 }
 
@@ -80,7 +82,7 @@ func (r *mockReader) ReadRootEntry(name string) (base.DirEntry, error) {
 }
 
 type mockIterator struct {
-	entries Entries
+	entries MockEntries
 	children []string
 	depth int
 	position int
@@ -88,7 +90,7 @@ type mockIterator struct {
 	err error
 }
 
-func newMockIterator(entries Entries, children []string, depth int) base.Iterator[base.DirEntry] {
+func newMockIterator(entries MockEntries, children []string, depth int) base.Iterator[base.DirEntry] {
 	return &mockIterator{entries, children, depth, -1, base.DirEntry{}, nil}
 }
 

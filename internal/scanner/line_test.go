@@ -14,7 +14,7 @@ import (
 func TestLineScanner_ScanDirs(t *testing.T) {
 	now := time.Now().UTC()
 	content := "hello\nsecond line hhhhh\nthird line"
-	testEntries := reader.Entries{
+	testEntries := reader.MockEntries{
 		"aaa": {ModTime: now, Content: nil},
 		"aaa/bbb": {ModTime: now, Content: nil},
 		"aaa/bbb/ccc": {ModTime: now, Content: nil},
@@ -209,7 +209,7 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 func TestLineScanner_ScanFile(t *testing.T) {
 	now := time.Now().UTC()
 	content := "hello\nsecond line hhhhh\nthird line"
-	testEntries := reader.Entries{
+	testEntries := reader.MockEntries{
 		"aaa": {ModTime: now, Content: nil},
 		"aaa/bbb": {ModTime: now, Content: nil},
 		"aaa/bbb/ccc": {ModTime: now, Content: nil},
