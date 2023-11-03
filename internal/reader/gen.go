@@ -55,15 +55,6 @@ func (g *gen) Generate() (MockEntries, string, []string) {
 	return entries, rootName, contents
 }
 
-func (g *gen) fileContent() string {
-	linesCount := g.rnd.Intn(g.maxLines)
-	lines := make([]string, linesCount)
-	for i := 0; i < int(linesCount); i++ {
-		lines[i] = textLines[g.rnd.Intn(len(textLines))]
-	}
-	return strings.Join(lines, "\n")
-}
-
 func (g *gen) dirChildren(entries MockEntries, dirName string, contents []string, depth int) []string {
 	depth += 1
 	if depth > g.maxDepth {
@@ -72,23 +63,38 @@ func (g *gen) dirChildren(entries MockEntries, dirName string, contents []string
 	dirsCount := g.rnd.Intn(g.maxDirs)
 	filesCount := g.rnd.Intn(g.maxFiles)
 	for i := 0; i < filesCount; i++ {
-		filePath := dirName + "/" + entryNames[i % len(entryNames)]
-		if i >= len(entryNames) {
-			filePath += strconv.Itoa(i / len(entryNames))
-		}
+		filePath := g.entryName(dirName, i, depth)
 		content := g.fileContent()
 		contents = append(contents, content)
 		entries[filePath] = MockEntry{ModTime: g.modTime(), Content: &content}
 	}
 	for i := 0; i < dirsCount; i++ {
-		dirPath := dirName + "/" + entryNames[(i + filesCount) % len(entryNames)]
-		if (i + filesCount) >= len(entryNames) {
-			dirPath += strconv.Itoa((i + filesCount) / len(entryNames))
-		}
+		dirPath := g.entryName(dirName, i + filesCount, depth)
 		entries[dirPath] = MockEntry{ModTime: g.modTime()}
 		contents = g.dirChildren(entries, dirPath, contents, depth)
 	}
 	return contents
+}
+
+func (g *gen) entryName(dirName string, index, depth int) string {
+	count := len(entryNames)
+	n := ""
+	if index >= count {
+		n = strconv.Itoa(index / count)
+	}
+	if depth % 2 == 0 {
+		return dirName + "/" + entryNames[count - 1 - (index % count)] + n
+	}
+	return dirName + "/" + entryNames[index % count] + n
+}
+
+func (g *gen) fileContent() string {
+	linesCount := g.rnd.Intn(g.maxLines)
+	lines := make([]string, linesCount)
+	for i := 0; i < int(linesCount); i++ {
+		lines[i] = textLines[g.rnd.Intn(len(textLines))]
+	}
+	return strings.Join(lines, "\n")
 }
 
 func (g *gen) modTime() time.Time {
