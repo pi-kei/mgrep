@@ -207,19 +207,15 @@ func main() {
 			},
 			func(fileEntry base.DirEntry) bool {
 				if fileEntry.Size == 0 {
-					// nothing to search
 					return true
 				}
 				if fileEntry.Size > options.maxSize {
-					// skip file because of options
 					return true
 				}
 				if options.include != nil && !options.include.MatchString(fileEntry.Path) {
-					// skip file because of options
 					return true
 				}
 				if options.exclude != nil && options.exclude.MatchString(fileEntry.Path) {
-					// skip file because of options
 					return true
 				}
 				return false
