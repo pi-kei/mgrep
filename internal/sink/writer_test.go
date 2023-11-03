@@ -7,7 +7,7 @@ import (
 	"github.com/pi-kei/mgrep/internal/base"
 )
 
-func TestWriterSink_HandlerResult(t *testing.T) {
+func TestWriterSink_HandleResult(t *testing.T) {
 	var sb strings.Builder
 	sink := NewWriterSink(&sb)
 
@@ -18,7 +18,7 @@ func TestWriterSink_HandlerResult(t *testing.T) {
 	}
 }
 
-func TestCustomWriterSink_HandlerResult(t *testing.T) {
+func TestCustomWriterSink_HandleResult(t *testing.T) {
 	var sb strings.Builder
 	calledTimes := 0
 	sink := NewCustomWriterSink(&sb, "%s %v %v %v %s", func(result base.SearchResult) []any {
