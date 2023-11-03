@@ -229,7 +229,7 @@ func main() {
 	sink := sink.NewWriterSink(os.Stdout)
 	var searcherIns base.Searcher
 	if options.concurrency == 0 {
-		searcherIns = searcher.NewLinearSearcher(scanner, filterIns, sink)
+		searcherIns = searcher.NewSerialSearcher(scanner, filterIns, sink)
 	} else {
 		searcherIns = searcher.NewConcurrentSearcher(scanner, filterIns, sink, options.concurrency, options.bufferSize)
 	}
