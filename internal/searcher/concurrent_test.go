@@ -15,19 +15,25 @@ import (
 
 func BenchmarkConcurrentSearcher(b *testing.B) {
 	b.Run("1", func(b *testing.B) {
-		benchmarkConcurrentSearcher(b, 10, 10, 3, 5, 5)
+		benchmarkConcurrentSearcher(b, 9, 5, 2, 4, 4)
 	})
 	b.Run("2", func(b *testing.B) {
-		benchmarkConcurrentSearcher(b, 18, 50, 4, 7, 7)
+		benchmarkConcurrentSearcher(b, 10, 10, 3, 5, 5)
 	})
 	b.Run("3", func(b *testing.B) {
-		benchmarkConcurrentSearcher(b, 13, 75, 5, 8, 8)
+		benchmarkConcurrentSearcher(b, 18, 50, 4, 7, 7)
 	})
 	b.Run("4", func(b *testing.B) {
-		benchmarkConcurrentSearcher(b, 15, 100, 6, 10, 10)
+		benchmarkConcurrentSearcher(b, 13, 75, 5, 8, 8)
 	})
 	b.Run("5", func(b *testing.B) {
-		benchmarkConcurrentSearcher(b, 92, 100, 7, 9, 9)
+		benchmarkConcurrentSearcher(b, 15, 100, 6, 9, 9)
+	})
+	b.Run("6", func(b *testing.B) {
+		benchmarkConcurrentSearcher(b, 92, 150, 7, 10, 10)
+	})
+	b.Run("7", func(b *testing.B) {
+		benchmarkConcurrentSearcher(b, 92, 200, 8, 11, 11)
 	})
 }
 

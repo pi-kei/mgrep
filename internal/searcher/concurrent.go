@@ -2,12 +2,11 @@ package searcher
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"regexp"
+	"sync"
 
 	"github.com/pi-kei/mgrep/internal/base"
-	"github.com/pi-kei/mgrep/pkg/concurrency"
 )
 
 type Concurrent struct {
@@ -35,56 +34,110 @@ func (c *Concurrent) GetSink() base.Sink {
 }
 
 func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *regexp.Regexp) {
-	filesChannels := concurrency.ProcRecursively(ctx, rootPath, func(newRootPath string, send func(string) (int, error), handleDirEntry func(base.DirEntry) error) {
-		err := c.GetScanner().ScanDirs(newRootPath, func(entry base.DirEntry) error {
-			if entry.IsDir {
-				if c.GetFilter().SkipDirEntry(entry) {
-					return c.GetScanner().GetSkipItem()
-				}
-				if entry.Path == newRootPath {
-					return nil
-				}
-				chosen, err := send(entry.Path)
-				if err != nil {
-					return c.GetScanner().GetSkipAll()
-				}
-				if chosen >= 0 {
-					return c.GetScanner().GetSkipItem()
-				}
-				return nil
-			}
-			
-			if c.GetFilter().SkipFileEntry(entry) {
-				return c.GetScanner().GetSkipItem()
-			}
-			err := handleDirEntry(entry)
-			if ctx.Err() != nil && errors.Is(err, ctx.Err()) {
-				return c.GetScanner().GetSkipAll()
-			}
-			return err
-		})
-		if err != nil {
-			fmt.Println("Error scanning dir", err)
-		}
-	}, c.concurrency, c.bufferSize)
+	pathsChannel := make(chan string, c.bufferSize)
+	filesChannel := make(chan base.DirEntry, c.bufferSize)
+	resultsChannel := make(chan base.SearchResult, c.bufferSize)
 
-	resultsChannels := concurrency.PipelineMulti(ctx, filesChannels, func(fileEntry base.DirEntry, handleSearchResult func(base.SearchResult) error) {
-		err := c.GetScanner().ScanFile(fileEntry, searchRegexp, func(sr base.SearchResult) error {
-			if c.GetFilter().SkipSearchResult(sr) {
-				return c.GetScanner().GetSkipItem()
+	var pathsWG sync.WaitGroup
+	var dirsWG sync.WaitGroup
+	dirsWG.Add(c.concurrency)
+	for i := 0; i < c.concurrency; i++ {
+		go func(index int) {
+			defer dirsWG.Done()
+			for {
+				select {
+				case newRootPath, ok := <-pathsChannel:
+					if !ok {
+						return
+					}
+					err := c.GetScanner().ScanDirs(newRootPath, func(entry base.DirEntry) error {
+						if entry.IsDir {
+							if c.GetFilter().SkipDirEntry(entry) {
+								return c.GetScanner().GetSkipItem()
+							}
+							if entry.Path == newRootPath {
+								return nil
+							}
+							pathsWG.Add(1)
+							select {
+							case pathsChannel <- entry.Path:
+								return c.GetScanner().GetSkipItem()
+							case <-ctx.Done():
+								pathsWG.Add(-1)
+								return c.GetScanner().GetSkipAll()
+							default:
+								pathsWG.Add(-1)
+								return nil
+							}
+						}
+						
+						if c.GetFilter().SkipFileEntry(entry) {
+							return c.GetScanner().GetSkipItem()
+						}
+						select {
+						case filesChannel <- entry:
+							return nil
+						case <-ctx.Done():
+							return c.GetScanner().GetSkipAll()
+						}
+					})
+					if err != nil {
+						fmt.Println("Error scanning dir", err)
+					}
+					pathsWG.Done()
+				case <-ctx.Done():
+					return
+				}
 			}
-			err := handleSearchResult(sr)
-			if ctx.Err() != nil && errors.Is(err, ctx.Err()) {
-				return c.GetScanner().GetSkipAll()
-			}
-			return err
-		})
-		if err != nil {
-			fmt.Println("Error scanning file", err)
-		}
-	}, c.bufferSize)
+		}(i)
+	}
+	go func() {
+		defer close(filesChannel)
+		dirsWG.Wait()
+	}()
 
-	resultsChannel := concurrency.FanIn(ctx, resultsChannels, c.bufferSize)
+	var filesWG sync.WaitGroup
+	filesWG.Add(c.concurrency)
+	for i := 0; i < c.concurrency; i++ {
+		go func() {
+			defer filesWG.Done()
+			for {
+				select {
+				case fileEntry, ok := <-filesChannel:
+					if !ok {
+						return
+					}
+					err := c.GetScanner().ScanFile(fileEntry, searchRegexp, func(sr base.SearchResult) error {
+						if c.GetFilter().SkipSearchResult(sr) {
+							return c.GetScanner().GetSkipItem()
+						}
+						select {
+						case resultsChannel <- sr:
+							return nil
+						case <-ctx.Done():
+							return c.GetScanner().GetSkipAll()
+						}
+					})
+					if err != nil {
+						fmt.Println("Error scanning file", err)
+					}
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
+	}
+	go func() {
+		defer close(resultsChannel)
+		filesWG.Wait()
+	}()
+
+	pathsWG.Add(1)
+	pathsChannel <- rootPath
+	go func() {
+		defer close(pathsChannel)
+		pathsWG.Wait()
+	}()
 
 	for result := range resultsChannel {
 		c.GetSink().HandleResult(result)
