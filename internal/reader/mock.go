@@ -21,6 +21,7 @@ type MockEntry struct{
 	ModTime time.Time   // modification time
 	Content *string     // files must have this not equal to nil, dirs must have this equal to nil
 	Err error           // error reading this entry or nil
+	children []string   // if present then it means it has precalculated children. for dirs only
 }
 
 type mockReader struct {
@@ -55,6 +56,9 @@ func (r *mockReader) ReadDir(dirEntry base.DirEntry) (base.Iterator[base.DirEntr
 	}
 	if entry.Content != nil {
 		return nil, errors.New("path is not a directory")
+	}
+	if entry.children != nil {
+		return newMockIterator(r.entries, entry.children, dirEntry.Depth + 1), nil
 	}
 	children := []string{}
 	for path := range r.entries {

@@ -59,21 +59,30 @@ func (g *gen) Generate() (MockEntries, string, []string) {
 func (g *gen) dirChildren(entries MockEntries, dirName string, contents []string, depth int) []string {
 	depth += 1
 	if depth > g.maxDepth {
+		parent := entries[dirName]
+		parent.children = []string{}
+		entries[dirName] = parent
 		return contents
 	}
 	dirsCount := g.rnd.Intn(g.maxDirs)
 	filesCount := g.rnd.Intn(g.maxFiles)
+	children := make([]string, dirsCount + filesCount)
 	for i := 0; i < filesCount; i++ {
 		filePath := g.entryName(dirName, i, depth)
 		content := g.fileContent()
 		contents = append(contents, content)
 		entries[filePath] = MockEntry{ModTime: g.modTime(), Content: &content}
+		children[i] = filePath
 	}
 	for i := 0; i < dirsCount; i++ {
 		dirPath := g.entryName(dirName, i + filesCount, depth)
 		entries[dirPath] = MockEntry{ModTime: g.modTime()}
 		contents = g.dirChildren(entries, dirPath, contents, depth)
+		children[i + filesCount] = dirPath
 	}
+	parent := entries[dirName]
+	parent.children = children
+	entries[dirName] = parent
 	return contents
 }
 
