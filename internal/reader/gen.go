@@ -35,15 +35,16 @@ var entryNames = []string{
 
 type gen struct {
 	rnd *rand.Rand
-	maxLines int   // max lines in file, min is 0
-	maxDepth int   // max depth of a path, min is 0
-	maxDirs int    // max child dirs in a parent dir, min is 0
-	maxFiles int   // max child files in a parent dir, min is 0
-	maxHours int64 // max hours range of a mod time of an entry. range: 2023-11-03 +/- maxHours/2 
+	maxLines int          // max lines in file, min is 0
+	maxDepth int          // max depth of a path, min is 0
+	maxDirs int           // max child dirs in a parent dir, min is 0
+	maxFiles int          // max child files in a parent dir, min is 0
+	modTimeBase time.Time // base of the mod time range. see maxHours
+	maxHours int64        // max hours range of a mod time of an entry. range: modTimeBase +/- maxHours/2 
 }
 
-func NewEntriesGen(seed int64, maxLines, maxDepth, maxDirs, maxFiles int, maxHours int64) *gen {
-	return &gen{rand.New(rand.NewSource(seed)), maxLines, maxDepth, maxDirs, maxFiles, maxHours}
+func NewEntriesGen(seed int64, maxLines, maxDepth, maxDirs, maxFiles int, modTimeBase time.Time, maxHours int64) *gen {
+	return &gen{rand.New(rand.NewSource(seed)), maxLines, maxDepth, maxDirs, maxFiles, modTimeBase, maxHours}
 }
 
 func (g *gen) Generate() (MockEntries, string, []string) {
@@ -98,5 +99,6 @@ func (g *gen) fileContent() string {
 }
 
 func (g *gen) modTime() time.Time {
-	return time.Date(2023, 11, 3, 0, 0, 0, 0, time.UTC).Add(time.Hour * time.Duration(g.rnd.Int63n(g.maxHours) - (g.maxHours / 2)))
+	modTimeBase := g.modTimeBase
+	return modTimeBase.Add(time.Hour * time.Duration(g.rnd.Int63n(g.maxHours) - (g.maxHours / 2)))
 }
