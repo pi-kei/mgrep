@@ -33,7 +33,10 @@ OPTIONS:
         Do not scan subdirectories. Same as max-depth=0
   -no-skip
         Do not skip anything
+  -prof
+        Run profiling. Set to cpu, heap, block, mutex or trace
 ```
+
 ## Build
 
 Install go on your system. Run in command line from project root:
@@ -41,3 +44,9 @@ Install go on your system. Run in command line from project root:
 `go mod tidy`
 
 `go build -v ./cmd/mgrep`
+
+## Benchmarks
+
+To run benchmarks execute this from project root:
+
+`go test -bench=. ./internal/searcher`
