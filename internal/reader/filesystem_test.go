@@ -1,23 +1,49 @@
 package reader
 
 import (
+	"bufio"
 	"errors"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"testing"
 	"time"
 
 	"github.com/pi-kei/mgrep/internal/base"
 )
 
-func TestFileSystemReader_OpenFile(t *testing.T) {
+func TestFileSystemReader(t *testing.T) {
+	tempDir := t.TempDir()
+	err := os.Mkdir(filepath.Join(tempDir, "thisisfortest"), 0644)
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, err := os.Create(filepath.Join(tempDir, "thisisfortest", "thisisfortest.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := bufio.NewWriter(file)
+	_, err = w.WriteString("this is\nfor test")
+	file.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Run("OpenFile", func(t *testing.T) {
+		testFileSystemReader_OpenFile(t, tempDir)
+	})
+	t.Run("ReadDir", func(t *testing.T) {
+		testFileSystemReader_ReadDir(t, tempDir)
+	})
+	t.Run("ReadRootEntry", func(t *testing.T) {
+		testFileSystemReader_ReadRootEntry(t, tempDir)
+	})
+}
+
+func testFileSystemReader_OpenFile(t *testing.T, tempDir string) {
 	fsr := NewFileSystemReader()
 	
-	_, file, _, _ := runtime.Caller(0)
-	testFilePath := filepath.Join(filepath.Dir(file), "thisisfortest", "thisisfortest.txt")
+	testFilePath := filepath.Join(tempDir, "thisisfortest", "thisisfortest.txt")
 	info, err := os.Lstat(testFilePath)
 	if err != nil {
 		t.Errorf("Lstat error: %v", err)
@@ -35,11 +61,10 @@ func TestFileSystemReader_OpenFile(t *testing.T) {
 	}
 }
 
-func TestFileSystemReader_ReadDir(t *testing.T) {
+func testFileSystemReader_ReadDir(t *testing.T, tempDir string) {
 	fsr := NewFileSystemReader()
 	
-	_, file, _, _ := runtime.Caller(0)
-	testDirPath := filepath.Join(filepath.Dir(file), "thisisfortest")
+	testDirPath := filepath.Join(tempDir, "thisisfortest")
 	info, err := os.Lstat(testDirPath)
 	if err != nil {
 		t.Errorf("Lstat error: %v", err)
@@ -65,11 +90,10 @@ func TestFileSystemReader_ReadDir(t *testing.T) {
 	}
 }
 
-func TestFileSystemReader_ReadRootEntry(t *testing.T) {
+func testFileSystemReader_ReadRootEntry(t *testing.T, tempDir string) {
 	fsr := NewFileSystemReader()
 	
-	_, file, _, _ := runtime.Caller(0)
-	testDirPath := filepath.Join(filepath.Dir(file), "thisisfortest")
+	testDirPath := filepath.Join(tempDir, "thisisfortest")
 	info, err := os.Lstat(testDirPath)
 	if err != nil {
 		t.Errorf("Lstat error: %v", err)
@@ -84,7 +108,7 @@ func TestFileSystemReader_ReadRootEntry(t *testing.T) {
 	if !reflect.DeepEqual(entry, base.DirEntry{Path: testDirPath, Depth: 0, IsDir: info.IsDir(), Size: info.Size(), ModTime: info.ModTime()}) {
 		t.Errorf("ReadRootEntry returned: %v", entry)
 	}
-	testDirPath = filepath.Join(filepath.Dir(file), "thisisfortest_nonexisting")
+	testDirPath = filepath.Join(tempDir, "thisisfortest_nonexisting")
 	entry, err = fsr.ReadRootEntry(testDirPath)
 	if err == nil || !reflect.DeepEqual(entry, base.DirEntry{}) {
 		t.Errorf("ReadRootEntry returned no error and entry %v", entry)
