@@ -39,7 +39,7 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 		{Path: "aaa/bbb/ggg", Depth: 2, IsDir: true, Size: 0, ModTime: testEntries["aaa/bbb/ggg"].ModTime},
 	}
 	calledTimes := 0
-	err := scanner.ScanDirs("aaa", func(entry base.DirEntry) error {
+	err := scanner.ScanDirs("aaa", 0, func(entry base.DirEntry) error {
 		if !reflect.DeepEqual(entry, callbacks[calledTimes]) {
 			t.Errorf("Callback called with %v expected %v", entry, callbacks[calledTimes])
 		}
@@ -56,7 +56,7 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 	// Nonexisting root path
 	callbacks = []base.DirEntry{}
 	calledTimes = 0
-	err = scanner.ScanDirs("nonexisting", func(entry base.DirEntry) error {
+	err = scanner.ScanDirs("nonexisting", 0, func(entry base.DirEntry) error {
 		if !reflect.DeepEqual(entry, callbacks[calledTimes]) {
 			t.Errorf("Callback called with %v expected %v", entry, callbacks[calledTimes])
 		}
@@ -72,10 +72,10 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 
 	// File root path
 	callbacks = []base.DirEntry{
-		{Path: "aaa/bbb/ccc/ddd/hhh", Depth: 0, IsDir: false, Size: int64(len(content)), ModTime: testEntries["aaa/bbb/ccc/ddd/hhh"].ModTime},
+		{Path: "aaa/bbb/ccc/ddd/hhh", Depth: 4, IsDir: false, Size: int64(len(content)), ModTime: testEntries["aaa/bbb/ccc/ddd/hhh"].ModTime},
 	}
 	calledTimes = 0
-	err = scanner.ScanDirs("aaa/bbb/ccc/ddd/hhh", func(entry base.DirEntry) error {
+	err = scanner.ScanDirs("aaa/bbb/ccc/ddd/hhh", 4, func(entry base.DirEntry) error {
 		if !reflect.DeepEqual(entry, callbacks[calledTimes]) {
 			t.Errorf("Callback called with %v expected %v", entry, callbacks[calledTimes])
 		}
@@ -91,10 +91,10 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 
 	// File root path, skip item
 	callbacks = []base.DirEntry{
-		{Path: "aaa/bbb/ccc/ddd/hhh", Depth: 0, IsDir: false, Size: int64(len(content)), ModTime: testEntries["aaa/bbb/ccc/ddd/hhh"].ModTime},
+		{Path: "aaa/bbb/ccc/ddd/hhh", Depth: 4, IsDir: false, Size: int64(len(content)), ModTime: testEntries["aaa/bbb/ccc/ddd/hhh"].ModTime},
 	}
 	calledTimes = 0
-	err = scanner.ScanDirs("aaa/bbb/ccc/ddd/hhh", func(entry base.DirEntry) error {
+	err = scanner.ScanDirs("aaa/bbb/ccc/ddd/hhh", 4, func(entry base.DirEntry) error {
 		if !reflect.DeepEqual(entry, callbacks[calledTimes]) {
 			t.Errorf("Callback called with %v expected %v", entry, callbacks[calledTimes])
 		}
@@ -110,10 +110,10 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 
 	// File root path, skip all
 	callbacks = []base.DirEntry{
-		{Path: "aaa/bbb/ccc/ddd/hhh", Depth: 0, IsDir: false, Size: int64(len(content)), ModTime: testEntries["aaa/bbb/ccc/ddd/hhh"].ModTime},
+		{Path: "aaa/bbb/ccc/ddd/hhh", Depth: 4, IsDir: false, Size: int64(len(content)), ModTime: testEntries["aaa/bbb/ccc/ddd/hhh"].ModTime},
 	}
 	calledTimes = 0
-	err = scanner.ScanDirs("aaa/bbb/ccc/ddd/hhh", func(entry base.DirEntry) error {
+	err = scanner.ScanDirs("aaa/bbb/ccc/ddd/hhh", 4, func(entry base.DirEntry) error {
 		if !reflect.DeepEqual(entry, callbacks[calledTimes]) {
 			t.Errorf("Callback called with %v expected %v", entry, callbacks[calledTimes])
 		}
@@ -129,11 +129,11 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 
 	// File root path, error from callback
 	callbacks = []base.DirEntry{
-		{Path: "aaa/bbb/ccc/ddd/hhh", Depth: 0, IsDir: false, Size: int64(len(content)), ModTime: testEntries["aaa/bbb/ccc/ddd/hhh"].ModTime},
+		{Path: "aaa/bbb/ccc/ddd/hhh", Depth: 4, IsDir: false, Size: int64(len(content)), ModTime: testEntries["aaa/bbb/ccc/ddd/hhh"].ModTime},
 	}
 	calledTimes = 0
 	testError := errors.New("test")
-	err = scanner.ScanDirs("aaa/bbb/ccc/ddd/hhh", func(entry base.DirEntry) error {
+	err = scanner.ScanDirs("aaa/bbb/ccc/ddd/hhh", 4, func(entry base.DirEntry) error {
 		if !reflect.DeepEqual(entry, callbacks[calledTimes]) {
 			t.Errorf("Callback called with %v expected %v", entry, callbacks[calledTimes])
 		}
@@ -152,7 +152,7 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 		{Path: "aaa", Depth: 0, IsDir: true, Size: 0, ModTime: testEntries["aaa"].ModTime},
 	}
 	calledTimes = 0
-	err = scanner.ScanDirs("aaa", func(entry base.DirEntry) error {
+	err = scanner.ScanDirs("aaa", 0, func(entry base.DirEntry) error {
 		if !reflect.DeepEqual(entry, callbacks[calledTimes]) {
 			t.Errorf("Callback called with %v expected %v", entry, callbacks[calledTimes])
 		}
@@ -171,7 +171,7 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 		{Path: "aaa", Depth: 0, IsDir: true, Size: 0, ModTime: testEntries["aaa"].ModTime},
 	}
 	calledTimes = 0
-	err = scanner.ScanDirs("aaa", func(entry base.DirEntry) error {
+	err = scanner.ScanDirs("aaa", 0, func(entry base.DirEntry) error {
 		if !reflect.DeepEqual(entry, callbacks[calledTimes]) {
 			t.Errorf("Callback called with %v expected %v", entry, callbacks[calledTimes])
 		}
@@ -191,7 +191,7 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 	}
 	calledTimes = 0
 	testError = errors.New("test")
-	err = scanner.ScanDirs("aaa", func(entry base.DirEntry) error {
+	err = scanner.ScanDirs("aaa", 0, func(entry base.DirEntry) error {
 		if !reflect.DeepEqual(entry, callbacks[calledTimes]) {
 			t.Errorf("Callback called with %v expected %v", entry, callbacks[calledTimes])
 		}

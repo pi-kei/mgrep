@@ -51,7 +51,7 @@ type Reader interface {
 	ReadDir(dirEntry DirEntry) (Iterator[DirEntry], error)
 	// Reads root entry from specified name.
 	// Entry can be a file or directory
-	ReadRootEntry(name string) (DirEntry, error)
+	ReadRootEntry(name string, depth int) (DirEntry, error)
 }
 
 // Checks if skip is needed
@@ -80,7 +80,7 @@ type Scanner interface {
 	ScanFile(fileEntry DirEntry, searchRegexp *regexp.Regexp, callback func(SearchResult) error) error
 	// Scans directories starting at the specified root path and calls a callback on each found entry.
 	// Callback returns an error if occured. Error could be either SkipItem, or SkipAll, or any other error
-	ScanDirs(rootPath string, callback func(DirEntry) error) error
+	ScanDirs(rootPath string, depth int, callback func(DirEntry) error) error
 }
 
 // Handles search results

@@ -34,7 +34,7 @@ func (s *Serial) Search(ctx context.Context, rootPath string, searchRegexp *rege
 	done := make(chan struct{})
 
 	go func() {
-		err := s.GetScanner().ScanDirs(rootPath, func(entry base.DirEntry) error {
+		err := s.GetScanner().ScanDirs(rootPath, 0, func(entry base.DirEntry) error {
 			select {
 			case <-ctx.Done():
 				return s.GetScanner().GetSkipAll()

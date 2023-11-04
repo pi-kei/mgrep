@@ -24,12 +24,12 @@ func (fs *FileSystem) ReadDir(dirEntry base.DirEntry) (base.Iterator[base.DirEnt
 	return newIterator(dirEntry, fsDirEntries), err
 }
 
-func (fs *FileSystem) ReadRootEntry(name string) (base.DirEntry, error) {
+func (fs *FileSystem) ReadRootEntry(name string, depth int) (base.DirEntry, error) {
 	info, err := os.Lstat(name)
 	if err != nil {
 		return base.DirEntry{}, err
 	}
-	return base.DirEntry{Path: name, Depth: 0, IsDir: info.IsDir(), Size: info.Size(), ModTime: info.ModTime()}, nil
+	return base.DirEntry{Path: name, Depth: depth, IsDir: info.IsDir(), Size: info.Size(), ModTime: info.ModTime()}, nil
 }
 
 type iterator struct {

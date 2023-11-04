@@ -70,7 +70,7 @@ func (r *mockReader) ReadDir(dirEntry base.DirEntry) (base.Iterator[base.DirEntr
 	return newMockIterator(r.entries, children, dirEntry.Depth + 1), nil
 }
 
-func (r *mockReader) ReadRootEntry(name string) (base.DirEntry, error) {
+func (r *mockReader) ReadRootEntry(name string, depth int) (base.DirEntry, error) {
 	entry, ok := r.entries[name]
 	if !ok {
 		return base.DirEntry{}, errors.New("path does not exist")
@@ -82,7 +82,7 @@ func (r *mockReader) ReadRootEntry(name string) (base.DirEntry, error) {
 	if entry.Content != nil {
 		size = int64(len(*entry.Content))
 	}
-	return base.DirEntry{Path: name, Depth: 0, IsDir: entry.Content == nil, Size: size, ModTime: entry.ModTime}, nil
+	return base.DirEntry{Path: name, Depth: depth, IsDir: entry.Content == nil, Size: size, ModTime: entry.ModTime}, nil
 }
 
 type mockIterator struct {

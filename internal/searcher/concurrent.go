@@ -34,7 +34,11 @@ func (c *Concurrent) GetSink() base.Sink {
 }
 
 func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *regexp.Regexp) {
-	pathsChannel := make(chan string, c.bufferSize)
+	type pathAndDepth struct {
+		path string
+		depth int
+	}
+	pathsChannel := make(chan pathAndDepth, c.bufferSize)
 	filesChannel := make(chan base.DirEntry, c.bufferSize)
 	resultsChannel := make(chan base.SearchResult, c.bufferSize)
 
@@ -50,17 +54,17 @@ func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *
 					if !ok {
 						return
 					}
-					err := c.GetScanner().ScanDirs(newRootPath, func(entry base.DirEntry) error {
+					err := c.GetScanner().ScanDirs(newRootPath.path, newRootPath.depth, func(entry base.DirEntry) error {
 						if entry.IsDir {
 							if c.GetFilter().SkipDirEntry(entry) {
 								return c.GetScanner().GetSkipItem()
 							}
-							if entry.Path == newRootPath {
+							if entry.Path == newRootPath.path {
 								return nil
 							}
 							pathsWG.Add(1)
 							select {
-							case pathsChannel <- entry.Path:
+							case pathsChannel <- pathAndDepth{entry.Path, entry.Depth}:
 								return c.GetScanner().GetSkipItem()
 							case <-ctx.Done():
 								pathsWG.Add(-1)
@@ -133,7 +137,7 @@ func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *
 	}()
 
 	pathsWG.Add(1)
-	pathsChannel <- rootPath
+	pathsChannel <- pathAndDepth{rootPath, 0}
 	go func() {
 		defer close(pathsChannel)
 		pathsWG.Wait()

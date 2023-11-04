@@ -101,7 +101,7 @@ func testFileSystemReader_ReadRootEntry(t *testing.T, tempDir string) {
 	if !info.IsDir() {
 		t.Errorf("IsDir returned false")
 	}
-	entry, err := fsr.ReadRootEntry(testDirPath)
+	entry, err := fsr.ReadRootEntry(testDirPath, 0)
 	if err != nil {
 		t.Errorf("ReadRootEntry error: %v", err)
 	}
@@ -109,7 +109,7 @@ func testFileSystemReader_ReadRootEntry(t *testing.T, tempDir string) {
 		t.Errorf("ReadRootEntry returned: %v", entry)
 	}
 	testDirPath = filepath.Join(tempDir, "thisisfortest_nonexisting")
-	entry, err = fsr.ReadRootEntry(testDirPath)
+	entry, err = fsr.ReadRootEntry(testDirPath, 0)
 	if err == nil || !reflect.DeepEqual(entry, base.DirEntry{}) {
 		t.Errorf("ReadRootEntry returned no error and entry %v", entry)
 	}

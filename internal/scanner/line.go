@@ -55,8 +55,8 @@ func (l *Line) ScanFile(fileEntry base.DirEntry, searchRegexp *regexp.Regexp, ca
 	return nil
 }
 
-func (l *Line) ScanDirs(rootPath string, callback func(base.DirEntry) error) error {
-	rootDirEntry, rootErr := l.GetReader().ReadRootEntry(rootPath)
+func (l *Line) ScanDirs(rootPath string, depth int, callback func(base.DirEntry) error) error {
+	rootDirEntry, rootErr := l.GetReader().ReadRootEntry(rootPath, depth)
 	if rootErr != nil {
 		return rootErr
 	}
