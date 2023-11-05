@@ -70,7 +70,6 @@ func getProfile(profile string) (func(), error) {
 		if err != nil {
 			return nil, err
 		}
-		defer traceProf.Close()
 		err = trace.Start(traceProf)
 		if err != nil {
 			traceProf.Close()
