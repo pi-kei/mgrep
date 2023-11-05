@@ -13,10 +13,16 @@ type Writer struct {
 	getValues func(result base.SearchResult) []any
 }
 
+// Sink that writes formatted strings to a specified writer.
+// Uses default format.
+// Not thread-safe.
 func NewWriterSink(writer io.Writer) base.Sink {
 	return &Writer{writer, DefaultFormat, DefaultGetValues}
 }
 
+// Sink that writes formatted strings to a specified writer.
+// Uses specified format.
+// Not thread-safe.
 func NewCustomWriterSink(writer io.Writer, format string, getValues func(result base.SearchResult) []any) base.Sink {
 	return &Writer{writer, format, getValues}
 }

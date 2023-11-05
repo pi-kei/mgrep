@@ -6,6 +6,8 @@ import (
 
 type Noop struct {}
 
+// Sink that does nothing.
+// Thread-safe.
 func NewNoopSink() base.Sink {
 	return &Noop{}
 }
