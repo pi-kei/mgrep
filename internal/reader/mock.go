@@ -10,9 +10,9 @@ import (
 	"github.com/pi-kei/mgrep/internal/base"
 )
 
-// This structure is not preventing you from a file that have children entries.
+// This structure is not preventing you from adding a file that has child entries.
 // Just keep it in mind and try to avoid it.
-// Key is a single path. Parts of a path separeted by /.
+// Key is a single path. Parts of a path separated by /.
 // Do not put / at the start or end of a path.
 // Do not put multiple / in a row.
 type MockEntries = map[string]MockEntry
