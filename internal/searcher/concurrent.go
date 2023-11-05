@@ -2,7 +2,7 @@ package searcher
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"regexp"
 	"sync"
 
@@ -13,12 +13,13 @@ type Concurrent struct {
 	scanner base.Scanner
 	filter base.Filter
 	sink base.Sink
+	logger *log.Logger
 	concurrency   int            // number of goroutines to spawn
 	bufferSize    int            // size of buffers of channels
 }
 
-func NewConcurrentSearcher(scanner base.Scanner, filter base.Filter, sink base.Sink, concurrency int, bufferSize int) base.Searcher {
-	return &Concurrent{scanner, filter, sink, concurrency, bufferSize}
+func NewConcurrentSearcher(scanner base.Scanner, filter base.Filter, sink base.Sink, logger *log.Logger, concurrency int, bufferSize int) base.Searcher {
+	return &Concurrent{scanner, filter, sink, logger, concurrency, bufferSize}
 }
 
 func (c *Concurrent) GetScanner() base.Scanner {
@@ -86,7 +87,7 @@ func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *
 						}
 					})
 					if err != nil {
-						fmt.Println("Error scanning dir", err)
+						c.logger.Println("Error scanning dir", err)
 					}
 					pathsWG.Done()
 				case <-ctx.Done():
@@ -123,7 +124,7 @@ func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *
 						}
 					})
 					if err != nil {
-						fmt.Println("Error scanning file", err)
+						c.logger.Println("Error scanning file", err)
 					}
 				case <-ctx.Done():
 					return

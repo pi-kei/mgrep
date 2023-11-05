@@ -2,7 +2,7 @@ package searcher
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"regexp"
 
 	"github.com/pi-kei/mgrep/internal/base"
@@ -12,10 +12,11 @@ type Serial struct {
 	scanner base.Scanner
 	filter  base.Filter
 	sink    base.Sink
+	logger  *log.Logger
 }
 
-func NewSerialSearcher(scanner base.Scanner, filter base.Filter, sink base.Sink) base.Searcher {
-	return &Serial{scanner, filter, sink}
+func NewSerialSearcher(scanner base.Scanner, filter base.Filter, sink base.Sink, logger *log.Logger) base.Searcher {
+	return &Serial{scanner, filter, sink, logger}
 }
 
 func (s *Serial) GetScanner() base.Scanner {
@@ -65,12 +66,12 @@ func (s *Serial) Search(ctx context.Context, rootPath string, searchRegexp *rege
 				return nil
 			})
 			if err != nil {
-				fmt.Println("Error scanning file", err)
+				s.logger.Println("Error scanning file", err)
 			}
 			return nil
 		})
 		if err != nil {
-			fmt.Println("Error scanning dir", err)
+			s.logger.Println("Error scanning dir", err)
 		}
 		done <- struct{}{}
 	}()

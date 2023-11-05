@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"regexp"
@@ -229,9 +230,9 @@ func main() {
 	sink := sink.NewWriterSink(os.Stdout)
 	var searcherIns base.Searcher
 	if options.concurrency == 0 {
-		searcherIns = searcher.NewSerialSearcher(scanner, filterIns, sink)
+		searcherIns = searcher.NewSerialSearcher(scanner, filterIns, sink, log.Default())
 	} else {
-		searcherIns = searcher.NewConcurrentSearcher(scanner, filterIns, sink, options.concurrency, options.bufferSize)
+		searcherIns = searcher.NewConcurrentSearcher(scanner, filterIns, sink, log.Default(), options.concurrency, options.bufferSize)
 	}
 	searcherIns.Search(ctx, searchDir, searchRegexp)
 }

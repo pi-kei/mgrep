@@ -2,6 +2,7 @@ package searcher
 
 import (
 	"context"
+	"log"
 	"regexp"
 	"testing"
 	"time"
@@ -43,7 +44,7 @@ func benchmarkSerialSearcher(b *testing.B, seed int64, maxLines, maxDepth, maxDi
 	scanner := scanner.NewLineScanner(reader)
 	filter := filter.NewNoopFilter()
 	sink := sink.NewNoopSink()
-	searcher := NewSerialSearcher(scanner, filter, sink)
+	searcher := NewSerialSearcher(scanner, filter, sink, log.Default())
 	ctx := context.Background()
 	re := regexp.MustCompile("and")
 

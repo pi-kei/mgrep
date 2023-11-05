@@ -2,6 +2,7 @@ package searcher
 
 import (
 	"context"
+	"log"
 	"regexp"
 	"runtime"
 	"testing"
@@ -44,7 +45,7 @@ func benchmarkConcurrentSearcher(b *testing.B, seed int64, maxLines, maxDepth, m
 	scanner := scanner.NewLineScanner(reader)
 	filter := filter.NewNoopFilter()
 	sink := sink.NewNoopSink()
-	searcher := NewConcurrentSearcher(scanner, filter, sink, runtime.NumCPU(), 1024)
+	searcher := NewConcurrentSearcher(scanner, filter, sink, log.Default(), runtime.NumCPU(), 1024)
 	ctx := context.Background()
 	re := regexp.MustCompile("and")
 
