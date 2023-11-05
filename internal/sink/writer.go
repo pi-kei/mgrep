@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/fatih/color"
 	"github.com/pi-kei/mgrep/internal/base"
 )
 
@@ -15,13 +14,7 @@ type Writer struct {
 }
 
 func NewWriterSink(writer io.Writer) base.Sink {
-	highlight := color.New(color.Bold, color.FgHiYellow).SprintFunc()
-	return &Writer{writer, "%s[%v,%v]:%s%s%s\n", func(result base.SearchResult) []any {
-		startPart := result.Line[0:result.StartIndex]
-		resultPart := highlight(result.Line[result.StartIndex:result.EndIndex])
-		endPart := result.Line[result.EndIndex:]
-		return []any{result.Path, result.LineNumber, result.StartIndex+1, startPart, resultPart, endPart}
-	}}
+	return &Writer{writer, DefaultFormat, DefaultGetValues}
 }
 
 func NewCustomWriterSink(writer io.Writer, format string, getValues func(result base.SearchResult) []any) base.Sink {
