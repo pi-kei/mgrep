@@ -45,8 +45,14 @@ Install go on your system. Run in command line from project root:
 
 `go build -v ./cmd/mgrep`
 
+## Tests
+
+To run tests execute this from project root:
+
+`go test ./... -cover`
+
 ## Benchmarks
 
 To run benchmarks execute this from project root:
 
-`go test -bench=. ./internal/searcher`
+`go test -bench=. -benchmem ./internal/searcher`
