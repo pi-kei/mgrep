@@ -16,7 +16,7 @@ import (
 
 func BenchmarkConcurrentSearcher(b *testing.B) {
 	b.Run("1", func(b *testing.B) {
-		benchmarkConcurrentSearcher(b, 9, 5, 2, 4, 4)
+		benchmarkConcurrentSearcher(b, 103, 5, 2, 4, 4)
 	})
 	b.Run("2", func(b *testing.B) {
 		benchmarkConcurrentSearcher(b, 10, 10, 3, 5, 5)
@@ -36,11 +36,17 @@ func BenchmarkConcurrentSearcher(b *testing.B) {
 	b.Run("7", func(b *testing.B) {
 		benchmarkConcurrentSearcher(b, 92, 200, 8, 11, 11)
 	})
+	b.Run("8", func(b *testing.B) {
+		benchmarkSerialSearcher(b, 145, 0, 9, 12, 0)
+	})
+	b.Run("9", func(b *testing.B) {
+		benchmarkSerialSearcher(b, 145, 250, 2, 1, 100000)
+	})
 }
 
 func benchmarkConcurrentSearcher(b *testing.B, seed int64, maxLines, maxDepth, maxDirs, maxFiles int) {
-	entries, rootName, _ := reader.NewEntriesGen(seed, maxLines, maxDepth, maxDirs, maxFiles, time.Now().UTC(), 48).Generate()
-	b.Logf("Entries generated: %v", len(entries))
+	entries, rootName, contents := reader.NewEntriesGen(seed, maxLines, maxDepth, maxDirs, maxFiles, time.Now().UTC(), 48).Generate()
+	b.Logf("Entries generated: %d (files: %d)", len(entries), len(contents))
 	reader := reader.NewMockReader(entries)
 	scanner := scanner.NewLineScanner(reader)
 	filter := filter.NewNoopFilter()
