@@ -24,7 +24,9 @@ func main() {
 		log.Println(err)
 		return
 	}
-	defer finalizeProfile()
+	if finalizeProfile != nil {
+		defer finalizeProfile()
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

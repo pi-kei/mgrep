@@ -79,7 +79,9 @@ func getProfile(profile string) (func(), error) {
 			trace.Stop()
 			traceProf.Close()
 		}, nil
+	} else if len(profile) > 0 {
+		return nil, errors.New("unknown profile")
 	}
 
-	return nil, errors.New("unknown profile")
+	return nil, nil
 }
