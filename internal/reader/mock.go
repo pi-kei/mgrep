@@ -122,5 +122,5 @@ func (i *mockIterator) Value() base.DirEntry {
 }
 
 func (i *mockIterator) Err() error {
-	return nil
+	return i.err
 }
