@@ -64,8 +64,14 @@ func (g *gen) dirChildren(entries MockEntries, dirName string, contents []string
 		entries[dirName] = parent
 		return contents
 	}
-	dirsCount := g.rnd.Intn(g.maxDirs)
-	filesCount := g.rnd.Intn(g.maxFiles)
+	dirsCount := 0
+	if g.maxDirs > 0 {
+		dirsCount = g.rnd.Intn(g.maxDirs)
+	}
+	filesCount := 0
+	if g.maxFiles > 0 {
+		filesCount = g.rnd.Intn(g.maxFiles)
+	}
 	children := make([]string, dirsCount + filesCount)
 	for i := 0; i < filesCount; i++ {
 		filePath := g.entryName(dirName, i, depth)
@@ -99,7 +105,10 @@ func (g *gen) entryName(dirName string, index, depth int) string {
 }
 
 func (g *gen) fileContent() string {
-	linesCount := g.rnd.Intn(g.maxLines)
+	linesCount := 0
+	if g.maxLines > 0 {
+		linesCount = g.rnd.Intn(g.maxLines)
+	}
 	lines := make([]string, linesCount)
 	for i := 0; i < int(linesCount); i++ {
 		lines[i] = textLines[g.rnd.Intn(len(textLines))]
@@ -109,5 +118,8 @@ func (g *gen) fileContent() string {
 
 func (g *gen) modTime() time.Time {
 	modTimeBase := g.modTimeBase
+	if g.maxHours <= 0 {
+		return modTimeBase
+	}
 	return modTimeBase.Add(time.Hour * time.Duration(g.rnd.Int63n(g.maxHours) - (g.maxHours / 2)))
 }
