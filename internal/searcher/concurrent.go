@@ -43,10 +43,17 @@ func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *
 	filesChannel := make(chan base.DirEntry, c.bufferSize)
 	resultsChannel := make(chan base.SearchResult, c.bufferSize)
 
+	dirsConcurr := 1
+	filesConcurr := 1
+	if c.concurrency > 2 {
+		dirsConcurr = c.concurrency / 2
+		filesConcurr = c.concurrency - dirsConcurr
+	}
+
 	var pathsWG sync.WaitGroup
 	var dirsWG sync.WaitGroup
-	dirsWG.Add(c.concurrency)
-	for i := 0; i < c.concurrency; i++ {
+	dirsWG.Add(dirsConcurr)
+	for i := 0; i < dirsConcurr; i++ {
 		go func(index int) {
 			defer dirsWG.Done()
 			for {
@@ -102,8 +109,8 @@ func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *
 	}()
 
 	var filesWG sync.WaitGroup
-	filesWG.Add(c.concurrency)
-	for i := 0; i < c.concurrency; i++ {
+	filesWG.Add(filesConcurr)
+	for i := 0; i < filesConcurr; i++ {
 		go func() {
 			defer filesWG.Done()
 			for {
