@@ -116,10 +116,7 @@ func testFileSystemReader_ReadRootEntry(t *testing.T, tempDir string) {
 }
 
 func TestIterator_Empty(t *testing.T) {
-	it := newIterator(base.DirEntry{
-		Path: "a",
-		Depth: 1,
-	}, []fs.DirEntry{})
+	it := newIterator("a", 2, []fs.DirEntry{})
 
 	err := it.Err()
 	if err != nil {
@@ -157,10 +154,7 @@ func TestIterator_Empty(t *testing.T) {
 func TestIterator_ErrorInTheMiddle(t *testing.T) {
 	t1 := time.Now().UTC()
 	t2 := time.Now().UTC()
-	it := newIterator(base.DirEntry{
-		Path: "a",
-		Depth: 1,
-	}, []fs.DirEntry{
+	it := newIterator("a", 2, []fs.DirEntry{
 		&mockFsDirEntry{infoReturn: &mockFsFileInfo{sizeReturn: 100, modTimeReturn: t1, nameReturn: "b", isDirReturn: false}},
 		&mockFsDirEntry{infoReturn: &mockFsFileInfo{sizeReturn: 256, modTimeReturn: t2, nameReturn: "c", isDirReturn: true}},
 		&mockFsDirEntry{infoError: errors.New("error"), nameReturn: "d", isDirReturn: true},
@@ -228,10 +222,7 @@ func TestIterator_ErrorInTheMiddle(t *testing.T) {
 func TestIterator_NoErrorsTilTheEnd(t *testing.T) {
 	t1 := time.Now().UTC()
 	t2 := time.Now().UTC()
-	it := newIterator(base.DirEntry{
-		Path: "a",
-		Depth: 1,
-	}, []fs.DirEntry{
+	it := newIterator("a", 2, []fs.DirEntry{
 		&mockFsDirEntry{infoReturn: &mockFsFileInfo{sizeReturn: 100, modTimeReturn: t1, nameReturn: "b", isDirReturn: false}},
 		&mockFsDirEntry{infoReturn: &mockFsFileInfo{sizeReturn: 256, modTimeReturn: t2, nameReturn: "c", isDirReturn: true}},
 	})

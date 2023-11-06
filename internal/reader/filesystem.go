@@ -21,7 +21,7 @@ func (fs *FileSystem) OpenFile(fileEntry base.DirEntry) (io.ReadCloser, error) {
 
 func (fs *FileSystem) ReadDir(dirEntry base.DirEntry) (base.Iterator[base.DirEntry], error) {
 	fsDirEntries, err := os.ReadDir(dirEntry.Path)
-	return newIterator(dirEntry, fsDirEntries), err
+	return newIterator(dirEntry.Path, dirEntry.Depth + 1, fsDirEntries), err
 }
 
 func (fs *FileSystem) ReadRootEntry(name string, depth int) (base.DirEntry, error) {
@@ -33,15 +33,16 @@ func (fs *FileSystem) ReadRootEntry(name string, depth int) (base.DirEntry, erro
 }
 
 type iterator struct {
-	parent base.DirEntry
+	parentPath string
+	depth int
 	entries []fs.DirEntry
 	position int
 	value base.DirEntry
 	err error
 }
 
-func newIterator(parent base.DirEntry, entries []fs.DirEntry) base.Iterator[base.DirEntry] {
-	return &iterator{parent, entries, -1, base.DirEntry{}, nil}
+func newIterator(parentPath string, depth int, entries []fs.DirEntry) base.Iterator[base.DirEntry] {
+	return &iterator{parentPath, depth, entries, -1, base.DirEntry{}, nil}
 }
 
 func (i *iterator) Next() bool {
@@ -55,8 +56,8 @@ func (i *iterator) Next() bool {
 		return false
 	}
 	i.value = base.DirEntry{
-		Path: filepath.Join(i.parent.Path, info.Name()),
-		Depth: i.parent.Depth + 1,
+		Path: filepath.Join(i.parentPath, info.Name()),
+		Depth: i.depth,
 		IsDir: info.IsDir(),
 		Size: info.Size(),
 		ModTime: info.ModTime(),
