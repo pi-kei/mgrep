@@ -7,7 +7,7 @@ import (
 	"github.com/pi-kei/mgrep/internal/base"
 )
 
-var DefaultFormat = "%s[%v,%v]:%s%s%s\n"
+var DefaultFormat = "%s[%d,%d]:%s%s%s\n"
 var highlight = color.New(color.Bold, color.FgHiYellow).SprintFunc()
 func DefaultGetValues(result base.SearchResult) []any {
 	startPart := result.Line[0:result.StartIndex]
