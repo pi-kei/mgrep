@@ -10,33 +10,21 @@ import (
 )
 
 type Concurrent struct {
-	scanner base.Scanner
-	filter base.Filter
-	sink base.Sink
-	logger *log.Logger
-	concurrency   int            // number of goroutines to spawn
-	bufferSize    int            // size of buffers of channels
+	scanner     base.Scanner
+	filter      base.Filter
+	sink        base.Sink
+	logger      *log.Logger
+	concurrency int // number of goroutines to spawn
+	bufferSize  int // size of buffers of channels
 }
 
 func NewConcurrentSearcher(scanner base.Scanner, filter base.Filter, sink base.Sink, logger *log.Logger, concurrency int, bufferSize int) base.Searcher {
 	return &Concurrent{scanner, filter, sink, logger, concurrency, bufferSize}
 }
 
-func (c *Concurrent) GetScanner() base.Scanner {
-	return c.scanner
-}
-
-func (c *Concurrent) GetFilter() base.Filter {
-	return c.filter
-}
-
-func (c *Concurrent) GetSink() base.Sink {
-	return c.sink
-}
-
 func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *regexp.Regexp) {
 	type pathAndDepth struct {
-		path string
+		path  string
 		depth int
 	}
 	pathsChannel := make(chan pathAndDepth, c.bufferSize)
@@ -62,10 +50,10 @@ func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *
 					if !ok {
 						return
 					}
-					err := c.GetScanner().ScanDirs(newRootPath.path, newRootPath.depth, func(entry base.DirEntry) error {
+					err := c.scanner.ScanDirs(newRootPath.path, newRootPath.depth, func(entry base.DirEntry) error {
 						if entry.IsDir {
-							if c.GetFilter().SkipDirEntry(entry) {
-								return c.GetScanner().GetSkipItem()
+							if c.filter.SkipDirEntry(entry) {
+								return base.ErrSkipItem
 							}
 							if entry.Path == newRootPath.path {
 								return nil
@@ -73,24 +61,24 @@ func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *
 							pathsWG.Add(1)
 							select {
 							case pathsChannel <- pathAndDepth{entry.Path, entry.Depth}:
-								return c.GetScanner().GetSkipItem()
+								return base.ErrSkipItem
 							case <-ctx.Done():
 								pathsWG.Add(-1)
-								return c.GetScanner().GetSkipAll()
+								return base.ErrSkipAll
 							default:
 								pathsWG.Add(-1)
 								return nil
 							}
 						}
-						
-						if c.GetFilter().SkipFileEntry(entry) {
-							return c.GetScanner().GetSkipItem()
+
+						if c.filter.SkipFileEntry(entry) {
+							return base.ErrSkipItem
 						}
 						select {
 						case filesChannel <- entry:
 							return nil
 						case <-ctx.Done():
-							return c.GetScanner().GetSkipAll()
+							return base.ErrSkipAll
 						}
 					})
 					if err != nil {
@@ -119,15 +107,15 @@ func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *
 					if !ok {
 						return
 					}
-					err := c.GetScanner().ScanFile(fileEntry, searchRegexp, func(sr base.SearchResult) error {
-						if c.GetFilter().SkipSearchResult(sr) {
-							return c.GetScanner().GetSkipItem()
+					err := c.scanner.ScanFile(fileEntry, searchRegexp, func(sr base.SearchResult) error {
+						if c.filter.SkipSearchResult(sr) {
+							return base.ErrSkipItem
 						}
 						select {
 						case resultsChannel <- sr:
 							return nil
 						case <-ctx.Done():
-							return c.GetScanner().GetSkipAll()
+							return base.ErrSkipAll
 						}
 					})
 					if err != nil {
@@ -152,6 +140,6 @@ func (c *Concurrent) Search(ctx context.Context, rootPath string, searchRegexp *
 	}()
 
 	for result := range resultsChannel {
-		c.GetSink().HandleResult(result)
+		c.sink.HandleResult(result)
 	}
 }

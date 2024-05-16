@@ -15,18 +15,18 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 	now := time.Now().UTC()
 	content := "hello\nsecond line hhhhh\nthird line"
 	testEntries := reader.MockEntries{
-		"aaa": {ModTime: now, Content: nil},
-		"aaa/bbb": {ModTime: now, Content: nil},
-		"aaa/bbb/ccc": {ModTime: now, Content: nil},
-		"aaa/bbb/ccc/ddd": {ModTime: now, Content: nil},
+		"aaa":                 {ModTime: now, Content: nil},
+		"aaa/bbb":             {ModTime: now, Content: nil},
+		"aaa/bbb/ccc":         {ModTime: now, Content: nil},
+		"aaa/bbb/ccc/ddd":     {ModTime: now, Content: nil},
 		"aaa/bbb/ccc/ddd/hhh": {ModTime: now, Content: &content},
-		"aaa/bbb/ccc/eee": {ModTime: now, Content: nil},
-		"aaa/bbb/ccc/fff": {ModTime: now, Content: nil},
-		"aaa/bbb/ggg": {ModTime: now, Content: nil},
+		"aaa/bbb/ccc/eee":     {ModTime: now, Content: nil},
+		"aaa/bbb/ccc/fff":     {ModTime: now, Content: nil},
+		"aaa/bbb/ggg":         {ModTime: now, Content: nil},
 	}
 	reader := reader.NewMockReader(testEntries)
 	scanner := NewLineScanner(reader)
-	
+
 	// Walk through whole tree scructure
 	callbacks := []base.DirEntry{
 		{Path: "aaa", Depth: 0, IsDir: true, Size: 0, ModTime: testEntries["aaa"].ModTime},
@@ -99,7 +99,7 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 			t.Errorf("Callback called with %v expected %v", entry, callbacks[calledTimes])
 		}
 		calledTimes++
-		return scanner.GetSkipItem()
+		return base.ErrSkipItem
 	})
 	if calledTimes != len(callbacks) {
 		t.Errorf("Callback called %v times", calledTimes)
@@ -118,7 +118,7 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 			t.Errorf("Callback called with %v expected %v", entry, callbacks[calledTimes])
 		}
 		calledTimes++
-		return scanner.GetSkipAll()
+		return base.ErrSkipAll
 	})
 	if calledTimes != len(callbacks) {
 		t.Errorf("Callback called %v times", calledTimes)
@@ -157,7 +157,7 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 			t.Errorf("Callback called with %v expected %v", entry, callbacks[calledTimes])
 		}
 		calledTimes++
-		return scanner.GetSkipItem()
+		return base.ErrSkipItem
 	})
 	if calledTimes != len(callbacks) {
 		t.Errorf("Callback called %v times", calledTimes)
@@ -176,7 +176,7 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 			t.Errorf("Callback called with %v expected %v", entry, callbacks[calledTimes])
 		}
 		calledTimes++
-		return scanner.GetSkipAll()
+		return base.ErrSkipAll
 	})
 	if calledTimes != len(callbacks) {
 		t.Errorf("Callback called %v times", calledTimes)
@@ -210,14 +210,14 @@ func TestLineScanner_ScanFile(t *testing.T) {
 	now := time.Now().UTC()
 	content := "hello\nsecond line hhhhh\nthird line"
 	testEntries := reader.MockEntries{
-		"aaa": {ModTime: now, Content: nil},
-		"aaa/bbb": {ModTime: now, Content: nil},
-		"aaa/bbb/ccc": {ModTime: now, Content: nil},
-		"aaa/bbb/ccc/ddd": {ModTime: now, Content: nil},
+		"aaa":                 {ModTime: now, Content: nil},
+		"aaa/bbb":             {ModTime: now, Content: nil},
+		"aaa/bbb/ccc":         {ModTime: now, Content: nil},
+		"aaa/bbb/ccc/ddd":     {ModTime: now, Content: nil},
 		"aaa/bbb/ccc/ddd/hhh": {ModTime: now, Content: &content},
-		"aaa/bbb/ccc/eee": {ModTime: now, Content: nil},
-		"aaa/bbb/ccc/fff": {ModTime: now, Content: nil},
-		"aaa/bbb/ggg": {ModTime: now, Content: nil},
+		"aaa/bbb/ccc/eee":     {ModTime: now, Content: nil},
+		"aaa/bbb/ccc/fff":     {ModTime: now, Content: nil},
+		"aaa/bbb/ggg":         {ModTime: now, Content: nil},
 	}
 	reader := reader.NewMockReader(testEntries)
 	scanner := NewLineScanner(reader)
@@ -273,7 +273,7 @@ func TestLineScanner_ScanFile(t *testing.T) {
 			t.Errorf("Callback called with %v", entry)
 		}
 		calledTimes++
-		return scanner.GetSkipItem()
+		return base.ErrSkipItem
 	})
 	if calledTimes != len(callbacks) {
 		t.Errorf("Callback called %v times", calledTimes)
@@ -293,7 +293,7 @@ func TestLineScanner_ScanFile(t *testing.T) {
 			t.Errorf("Callback called with %v", entry)
 		}
 		calledTimes++
-		return scanner.GetSkipAll()
+		return base.ErrSkipAll
 	})
 	if calledTimes != len(callbacks) {
 		t.Errorf("Callback called %v times", calledTimes)

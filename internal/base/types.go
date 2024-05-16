@@ -2,6 +2,7 @@ package base
 
 import (
 	"context"
+	"errors"
 	"io"
 	"regexp"
 	"time"
@@ -9,11 +10,11 @@ import (
 
 // Dir entry
 type DirEntry struct {
-	Path     string      // path to entry
-	Depth    int         // recursion depth
-	IsDir    bool        // whether the entry describes a directory
-	Size     int64       // size of a file in bytes
-	ModTime  time.Time   // modification time
+	Path    string    // path to entry
+	Depth   int       // recursion depth
+	IsDir   bool      // whether the entry describes a directory
+	Size    int64     // size of a file in bytes
+	ModTime time.Time // modification time
 }
 
 // Represents a single match
@@ -34,7 +35,7 @@ type Iterator[T any] interface {
 	// Returns current value.
 	// Call after Next().
 	// If Next() was not called yet then Value() returns default value of T.
-	// If Next() returned false then Value() returns the same value as before 
+	// If Next() returned false then Value() returns the same value as before
 	Value() T
 	// Returns last occured error or nil
 	Err() error
@@ -67,14 +68,13 @@ type Filter interface {
 	SkipSearchResult(searchResult SearchResult) bool
 }
 
+var (
+	ErrSkipItem = errors.New("skip item")
+	ErrSkipAll  = errors.New("skip all")
+)
+
 // Scans for matches
 type Scanner interface {
-	// Returns reader
-	GetReader() Reader
-	// Returns error that means skip item
-	GetSkipItem() error
-	// Returns error that means skip all
-	GetSkipAll() error
 	// Scans a file and calls a callback on each match.
 	// Callback returns an error if occured. Error could be either SkipItem, or SkipAll, or any other error
 	ScanFile(fileEntry DirEntry, searchRegexp *regexp.Regexp, callback func(SearchResult) error) error
@@ -91,12 +91,6 @@ type Sink interface {
 
 // Performs search
 type Searcher interface {
-	// Returns scanner
-	GetScanner() Scanner
-	// Returns filter
-	GetFilter() Filter
-	// Returns sink
-	GetSink() Sink
 	// Starts search
 	Search(ctx context.Context, rootPath string, searchRegexp *regexp.Regexp)
 }

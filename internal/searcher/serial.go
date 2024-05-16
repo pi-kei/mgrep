@@ -19,50 +19,38 @@ func NewSerialSearcher(scanner base.Scanner, filter base.Filter, sink base.Sink,
 	return &Serial{scanner, filter, sink, logger}
 }
 
-func (s *Serial) GetScanner() base.Scanner {
-	return s.scanner
-}
-
-func (s *Serial) GetFilter() base.Filter {
-	return s.filter
-}
-
-func (s *Serial) GetSink() base.Sink {
-	return s.sink
-}
-
 func (s *Serial) Search(ctx context.Context, rootPath string, searchRegexp *regexp.Regexp) {
 	done := make(chan struct{})
 
 	go func() {
-		err := s.GetScanner().ScanDirs(rootPath, 0, func(entry base.DirEntry) error {
+		err := s.scanner.ScanDirs(rootPath, 0, func(entry base.DirEntry) error {
 			select {
 			case <-ctx.Done():
-				return s.GetScanner().GetSkipAll()
+				return base.ErrSkipAll
 			default:
 			}
-			
+
 			if entry.IsDir {
-				if s.GetFilter().SkipDirEntry(entry) {
-					return s.GetScanner().GetSkipItem()
+				if s.filter.SkipDirEntry(entry) {
+					return base.ErrSkipItem
 				}
 				return nil
 			}
-			
-			if s.GetFilter().SkipFileEntry(entry) {
-				return s.GetScanner().GetSkipItem()
+
+			if s.filter.SkipFileEntry(entry) {
+				return base.ErrSkipItem
 			}
-			err := s.GetScanner().ScanFile(entry, searchRegexp, func(result base.SearchResult) error {
+			err := s.scanner.ScanFile(entry, searchRegexp, func(result base.SearchResult) error {
 				select {
 				case <-ctx.Done():
-					return s.GetScanner().GetSkipAll()
+					return base.ErrSkipAll
 				default:
 				}
-				
-				if s.GetFilter().SkipSearchResult(result) {
-					return s.GetScanner().GetSkipItem()
+
+				if s.filter.SkipSearchResult(result) {
+					return base.ErrSkipItem
 				}
-				s.GetSink().HandleResult(result)
+				s.sink.HandleResult(result)
 				return nil
 			})
 			if err != nil {
@@ -75,6 +63,6 @@ func (s *Serial) Search(ctx context.Context, rootPath string, searchRegexp *rege
 		}
 		done <- struct{}{}
 	}()
-	
+
 	<-done
 }
