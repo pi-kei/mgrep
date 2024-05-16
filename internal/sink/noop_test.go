@@ -7,7 +7,7 @@ import (
 )
 
 func TestNoopSink_HandleResult(t *testing.T) {
-	sink := NewNoopSink()
+	sink := NewNoop()
 
 	sink.HandleResult(base.SearchResult{Path: "a/b/c.txt", LineNumber: 1, StartIndex: 2, EndIndex: 5, Line: "test test"})
 }

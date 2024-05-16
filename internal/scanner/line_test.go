@@ -25,7 +25,7 @@ func TestLineScanner_ScanDirs(t *testing.T) {
 		"aaa/bbb/ggg":         {ModTime: now, Content: nil},
 	}
 	reader := reader.NewMockReader(testEntries)
-	scanner := NewLineScanner(reader)
+	scanner := NewLine(reader)
 
 	// Walk through whole tree scructure
 	callbacks := []base.DirEntry{
@@ -220,7 +220,7 @@ func TestLineScanner_ScanFile(t *testing.T) {
 		"aaa/bbb/ggg":         {ModTime: now, Content: nil},
 	}
 	reader := reader.NewMockReader(testEntries)
-	scanner := NewLineScanner(reader)
+	scanner := NewLine(reader)
 
 	// Scan lines
 	fileEntry := base.DirEntry{Path: "aaa/bbb/ccc/ddd/hhh", Depth: 4, IsDir: false, Size: int64(len(content)), ModTime: testEntries["aaa/bbb/ccc/ddd/hhh"].ModTime}

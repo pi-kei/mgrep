@@ -7,22 +7,22 @@ import (
 )
 
 type Logger struct {
-	logger *log.Logger
-	format string
+	logger    *log.Logger
+	format    string
 	getValues func(result base.SearchResult) []any
 }
 
 // Sink that writes formatted strings using specified logger.
 // Uses default format.
 // Thread-safe.
-func NewLoggerSink(logger *log.Logger) base.Sink {
+func NewLogger(logger *log.Logger) base.Sink {
 	return &Logger{logger, DefaultFormat, DefaultGetValues}
 }
 
 // Sink that writes formatted strings using specified logger.
 // Uses specified format.
 // Thread-safe.
-func NewCustomLoggerSink(logger *log.Logger, format string, getValues func(result base.SearchResult) []any) base.Sink {
+func NewCustomLogger(logger *log.Logger, format string, getValues func(result base.SearchResult) []any) base.Sink {
 	return &Logger{logger, format, getValues}
 }
 

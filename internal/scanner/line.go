@@ -12,7 +12,7 @@ type Line struct {
 	reader base.Reader
 }
 
-func NewLineScanner(reader base.Reader) base.Scanner {
+func NewLine(reader base.Reader) base.Scanner {
 	return &Line{reader}
 }
 

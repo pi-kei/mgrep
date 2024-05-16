@@ -41,8 +41,8 @@ func TestFileSystemReader(t *testing.T) {
 }
 
 func testFileSystemReader_OpenFile(t *testing.T, tempDir string) {
-	fsr := NewFileSystemReader()
-	
+	fsr := NewFileSystem()
+
 	testFilePath := filepath.Join(tempDir, "thisisfortest", "thisisfortest.txt")
 	info, err := os.Lstat(testFilePath)
 	if err != nil {
@@ -62,8 +62,8 @@ func testFileSystemReader_OpenFile(t *testing.T, tempDir string) {
 }
 
 func testFileSystemReader_ReadDir(t *testing.T, tempDir string) {
-	fsr := NewFileSystemReader()
-	
+	fsr := NewFileSystem()
+
 	testDirPath := filepath.Join(tempDir, "thisisfortest")
 	info, err := os.Lstat(testDirPath)
 	if err != nil {
@@ -91,8 +91,8 @@ func testFileSystemReader_ReadDir(t *testing.T, tempDir string) {
 }
 
 func testFileSystemReader_ReadRootEntry(t *testing.T, tempDir string) {
-	fsr := NewFileSystemReader()
-	
+	fsr := NewFileSystem()
+
 	testDirPath := filepath.Join(tempDir, "thisisfortest")
 	info, err := os.Lstat(testDirPath)
 	if err != nil {
@@ -286,11 +286,11 @@ func TestIterator_NoErrorsTilTheEnd(t *testing.T) {
 }
 
 type mockFsDirEntry struct {
-	nameReturn string
+	nameReturn  string
 	isDirReturn bool
-	infoReturn fs.FileInfo
-	infoError error
-	typeReturn fs.FileMode
+	infoReturn  fs.FileInfo
+	infoError   error
+	typeReturn  fs.FileMode
 }
 
 func (m *mockFsDirEntry) Name() string {
@@ -310,12 +310,12 @@ func (m *mockFsDirEntry) Type() fs.FileMode {
 }
 
 type mockFsFileInfo struct {
-	nameReturn string
-	sizeReturn int64
+	nameReturn    string
+	sizeReturn    int64
 	modTimeReturn time.Time
-	isDirReturn bool
-	modeReturn fs.FileMode
-	sysReturn any
+	isDirReturn   bool
+	modeReturn    fs.FileMode
+	sysReturn     any
 }
 
 func (m *mockFsFileInfo) Name() string {

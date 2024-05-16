@@ -18,7 +18,7 @@ type Concurrent struct {
 	bufferSize  int // size of buffers of channels
 }
 
-func NewConcurrentSearcher(scanner base.Scanner, filter base.Filter, sink base.Sink, logger *log.Logger, concurrency int, bufferSize int) base.Searcher {
+func NewConcurrent(scanner base.Scanner, filter base.Filter, sink base.Sink, logger *log.Logger, concurrency int, bufferSize int) base.Searcher {
 	return &Concurrent{scanner, filter, sink, logger, concurrency, bufferSize}
 }
 

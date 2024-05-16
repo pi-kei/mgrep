@@ -4,13 +4,13 @@ import (
 	"github.com/pi-kei/mgrep/internal/base"
 )
 
-type Configurable struct{
-	skipDirEntryFn func(dirEntry base.DirEntry) bool
-	skipFileEntryFn func(fileEntry base.DirEntry) bool
+type Configurable struct {
+	skipDirEntryFn     func(dirEntry base.DirEntry) bool
+	skipFileEntryFn    func(fileEntry base.DirEntry) bool
 	skipSearchResultFn func(searchResult base.SearchResult) bool
 }
 
-func NewConfigurableFilter(
+func NewConfigurable(
 	skipDirEntryFn func(dirEntry base.DirEntry) bool,
 	skipFileEntryFn func(fileEntry base.DirEntry) bool,
 	skipSearchResultFn func(searchResult base.SearchResult) bool,

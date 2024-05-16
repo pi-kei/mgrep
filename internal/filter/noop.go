@@ -6,7 +6,7 @@ import (
 
 type Noop struct{}
 
-func NewNoopFilter() base.Filter {
+func NewNoop() base.Filter {
 	return &Noop{}
 }
 

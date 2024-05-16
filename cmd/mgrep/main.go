@@ -31,12 +31,12 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	reader := reader.NewFileSystemReader()
+	reader := reader.NewFileSystem()
 	var filterIns base.Filter
 	if options.noSkip {
-		filterIns = filter.NewNoopFilter()
+		filterIns = filter.NewNoop()
 	} else {
-		filterIns = filter.NewConfigurableFilter(
+		filterIns = filter.NewConfigurable(
 			func(dirEntry base.DirEntry) bool {
 				return dirEntry.Depth > options.maxDepth
 			},
@@ -60,13 +60,13 @@ func main() {
 			},
 		)
 	}
-	scanner := scanner.NewLineScanner(reader)
-	sink := sink.NewWriterSink(os.Stdout)
+	scanner := scanner.NewLine(reader)
+	sink := sink.NewWriter(os.Stdout)
 	var searcherIns base.Searcher
 	if options.concurrency == 0 {
-		searcherIns = searcher.NewSerialSearcher(scanner, filterIns, sink, log.Default())
+		searcherIns = searcher.NewSerial(scanner, filterIns, sink, log.Default())
 	} else {
-		searcherIns = searcher.NewConcurrentSearcher(scanner, filterIns, sink, log.Default(), options.concurrency, options.bufferSize)
+		searcherIns = searcher.NewConcurrent(scanner, filterIns, sink, log.Default(), options.concurrency, options.bufferSize)
 	}
 	searcherIns.Search(ctx, searchDir, searchRegexp)
 }

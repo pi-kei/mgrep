@@ -9,7 +9,7 @@ import (
 
 func TestWriterSink_HandleResult(t *testing.T) {
 	var sb strings.Builder
-	sink := NewWriterSink(&sb)
+	sink := NewWriter(&sb)
 
 	sink.HandleResult(base.SearchResult{Path: "a/b/c.txt", LineNumber: 1, StartIndex: 2, EndIndex: 5, Line: "test test"})
 	out := sb.String()
@@ -21,7 +21,7 @@ func TestWriterSink_HandleResult(t *testing.T) {
 func TestCustomWriterSink_HandleResult(t *testing.T) {
 	var sb strings.Builder
 	calledTimes := 0
-	sink := NewCustomWriterSink(&sb, "%s %v %v %v %s", func(result base.SearchResult) []any {
+	sink := NewCustomWriter(&sb, "%s %v %v %v %s", func(result base.SearchResult) []any {
 		calledTimes++
 		return []any{result.Path, result.LineNumber, result.StartIndex, result.EndIndex, result.Line}
 	})

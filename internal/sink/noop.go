@@ -4,11 +4,11 @@ import (
 	"github.com/pi-kei/mgrep/internal/base"
 )
 
-type Noop struct {}
+type Noop struct{}
 
 // Sink that does nothing.
 // Thread-safe.
-func NewNoopSink() base.Sink {
+func NewNoop() base.Sink {
 	return &Noop{}
 }
 

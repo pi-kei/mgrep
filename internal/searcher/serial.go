@@ -15,7 +15,7 @@ type Serial struct {
 	logger  *log.Logger
 }
 
-func NewSerialSearcher(scanner base.Scanner, filter base.Filter, sink base.Sink, logger *log.Logger) base.Searcher {
+func NewSerial(scanner base.Scanner, filter base.Filter, sink base.Sink, logger *log.Logger) base.Searcher {
 	return &Serial{scanner, filter, sink, logger}
 }
 

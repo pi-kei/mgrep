@@ -18,7 +18,7 @@ func TestConfigurableFilter_SkipDirEntry(t *testing.T) {
 	skipSearchResult := func(result base.SearchResult) bool {
 		return false
 	}
-	filter := NewConfigurableFilter(skipDirEntry, skipFileEntry, skipSearchResult)
+	filter := NewConfigurable(skipDirEntry, skipFileEntry, skipSearchResult)
 
 	skip := filter.SkipDirEntry(base.DirEntry{IsDir: true})
 	if !skip {
@@ -41,7 +41,7 @@ func TestConfigurableFilter_SkipFileEntry(t *testing.T) {
 	skipSearchResult := func(result base.SearchResult) bool {
 		return false
 	}
-	filter := NewConfigurableFilter(skipDirEntry, skipFileEntry, skipSearchResult)
+	filter := NewConfigurable(skipDirEntry, skipFileEntry, skipSearchResult)
 
 	skip := filter.SkipFileEntry(base.DirEntry{IsDir: false})
 	if !skip {
@@ -64,7 +64,7 @@ func TestConfigurableFilter_SkipSearchResult(t *testing.T) {
 		calledTimes++
 		return true
 	}
-	filter := NewConfigurableFilter(skipDirEntry, skipFileEntry, skipSearchResult)
+	filter := NewConfigurable(skipDirEntry, skipFileEntry, skipSearchResult)
 
 	skip := filter.SkipSearchResult(base.SearchResult{})
 	if !skip {
