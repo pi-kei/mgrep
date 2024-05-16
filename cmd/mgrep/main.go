@@ -31,6 +31,11 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	searcherIns := buildSearcher(options)
+	searcherIns.Search(ctx, searchDir, searchRegexp)
+}
+
+func buildSearcher(options searchOptions) base.Searcher {
 	reader := reader.NewFileSystem()
 	var filterIns base.Filter
 	if options.noSkip {
@@ -68,5 +73,5 @@ func main() {
 	} else {
 		searcherIns = searcher.NewConcurrent(scanner, filterIns, sink, log.Default(), options.concurrency, options.bufferSize)
 	}
-	searcherIns.Search(ctx, searchDir, searchRegexp)
+	return searcherIns
 }
