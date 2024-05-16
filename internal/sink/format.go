@@ -9,6 +9,7 @@ import (
 
 var DefaultFormat = "%s[%d,%d]:%s%s%s\n"
 var highlight = color.New(color.Bold, color.FgHiYellow).SprintFunc()
+
 func DefaultGetValues(result base.SearchResult) []any {
 	startPart := result.Line[0:result.StartIndex]
 	resultPart := highlight(result.Line[result.StartIndex:result.EndIndex])

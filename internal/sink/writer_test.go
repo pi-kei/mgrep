@@ -21,10 +21,10 @@ func TestWriterSink_HandleResult(t *testing.T) {
 func TestCustomWriterSink_HandleResult(t *testing.T) {
 	var sb strings.Builder
 	calledTimes := 0
-	sink := NewCustomWriter(&sb, "%s %v %v %v %s", func(result base.SearchResult) []any {
+	sink := NewWriter(&sb, WithWriterFormat("%s %v %v %v %s"), WithWriterGetValues(func(result base.SearchResult) []any {
 		calledTimes++
 		return []any{result.Path, result.LineNumber, result.StartIndex, result.EndIndex, result.Line}
-	})
+	}))
 
 	sink.HandleResult(base.SearchResult{Path: "a/b/c.txt", LineNumber: 1, StartIndex: 2, EndIndex: 5, Line: "test test"})
 	out := sb.String()

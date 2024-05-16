@@ -12,18 +12,28 @@ type Logger struct {
 	getValues func(result base.SearchResult) []any
 }
 
-// Sink that writes formatted strings using specified logger.
-// Uses default format.
-// Thread-safe.
-func NewLogger(logger *log.Logger) base.Sink {
-	return &Logger{logger, DefaultFormat, DefaultGetValues}
+type LoggerOption func(*Logger)
+
+func WithLoggerFormat(format string) LoggerOption {
+	return func(l *Logger) {
+		l.format = format
+	}
+}
+
+func WithLoggerGetValues(getValues func(result base.SearchResult) []any) LoggerOption {
+	return func(l *Logger) {
+		l.getValues = getValues
+	}
 }
 
 // Sink that writes formatted strings using specified logger.
-// Uses specified format.
 // Thread-safe.
-func NewCustomLogger(logger *log.Logger, format string, getValues func(result base.SearchResult) []any) base.Sink {
-	return &Logger{logger, format, getValues}
+func NewLogger(logger *log.Logger, options ...LoggerOption) base.Sink {
+	sink := Logger{logger, DefaultFormat, DefaultGetValues}
+	for _, option := range options {
+		option(&sink)
+	}
+	return &sink
 }
 
 func (l *Logger) HandleResult(result base.SearchResult) {
